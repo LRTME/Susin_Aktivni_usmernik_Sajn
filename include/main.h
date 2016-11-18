@@ -21,8 +21,12 @@
 #include    "PER_int.h"
 #include    "BACK_loop.h"
 
-#include    "PWM_drv.h"
+#include    "FB_bipolar.h"
+#include    "BB_2phase_shift.h"
+#include    "PWM_drv_fan.h"
 #include    "ADC_drv.h"
+#include    "FLT_int.h"
 #include    "PCB_util.h"
+
 
 #endif // end of __MAIN_H__ definition

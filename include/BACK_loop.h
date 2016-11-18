@@ -16,10 +16,9 @@
 #include    "F28x_Project.h"
 #include    "define.h"
 #include    "globals.h"
+#include    "FB_bipolar.h"
 
-#include    "PWM_drv.h"
 #include 	"PCB_util.h"
-#include    "PER_int.h"
     
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem

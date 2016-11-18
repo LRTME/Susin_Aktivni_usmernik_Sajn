@@ -10,30 +10,33 @@
 
 #include    "F28x_Project.h"
 #include    "define.h"
-#include    "DAC_drv.h"
+
+// s kakšnim taktom PWM-ja naj prožim ADC
+#define     ADC_SAMP_RATIO  SAMPLING_RATIO
 
 // doloci kateri PWM modul prozi ADC
 #define     ADC_MODUL1      EPwm1Regs
 
 // kje se nahajajo rezultati
-#define     ADC_ENC1_SIN    (AdcaResultRegs.ADCRESULT0)
-#define     ADC_ENC3_SIN    (AdcaResultRegs.ADCRESULT1)
-#define     ADC_NAP_1       (AdcaResultRegs.ADCRESULT2)
-#define     ADC_NAP_2       (AdcaResultRegs.ADCRESULT3)
-#define     ADC_TEMP        (AdcaResultRegs.ADCRESULT5)
 
-#define     ADC_ENC1_COS    (AdcbResultRegs.ADCRESULT0)
-#define     ADC_ENC3_COS    (AdcbResultRegs.ADCRESULT1)
-#define     ADC_NAP_DC      (AdcbResultRegs.ADCRESULT2)
-#define     ADC_NAP_3       (AdcbResultRegs.ADCRESULT3)
+// startani na SOCA
+#define     TEMPERATURA     (AdcdResultRegs.ADCRESULT0)
+#define     TOK_GRID        (AdcaResultRegs.ADCRESULT0)
+#define     TOK_BB1         (AdcaResultRegs.ADCRESULT1)
+#define     TOK_BB2         (AdcbResultRegs.ADCRESULT0)
+#define     TOK_OUT         (AdcaResultRegs.ADCRESULT2)
 
-#define     ADC_TOK_3       (AdccResultRegs.ADCRESULT0)
+// startani na SOCB
+#define     NAP_CAP         (AdcaResultRegs.ADCRESULT3)
+#define     NAP_OUT         (AdcbResultRegs.ADCRESULT1)
+#define     NAP_DC          (AdcbResultRegs.ADCRESULT2)
+#define     NAP_GRID        (AdcdResultRegs.ADCRESULT1)
 
-#define     ADC_TOK_2       (AdcdResultRegs.ADCRESULT0)
-#define     ADC_TOK_1       (AdcdResultRegs.ADCRESULT1)
-#define     ADC_POT_2       (AdcdResultRegs.ADCRESULT2)
-#define     ADC_POT_1       (AdcdResultRegs.ADCRESULT3)
-
+#define     POT_I_FINE      (AdccResultRegs.ADCRESULT0)
+#define     POT_I_COARSE    (AdccResultRegs.ADCRESULT1)
+#define     POT_U_FINE      (AdcaResultRegs.ADCRESULT4)
+#define     POT_U_COARSE    (AdccResultRegs.ADCRESULT2)
+#define     TEMP_CPU        (AdcdResultRegs.ADCRESULT0)
 
 /**************************************************************
 * inicializiramo ADC

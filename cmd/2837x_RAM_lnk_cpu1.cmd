@@ -63,15 +63,14 @@ SECTIONS
 
 /* CODE */
     .text: >>       P_LS05 | P_D01 | P_GS05    PAGE = 0, ALIGN(4)
-
 	ramfuncs:       {
-                        rts2800_fpu32_fast_supplement.lib<atan2_f32.obj>(.text)
+/*                        rts2800_fpu32_fast_supplement.lib<atan2_f32.obj>(.text)
                         rts2800_fpu32_fast_supplement.lib<div_f32.obj>(.text)
                         rts2800_fpu32_fast_supplement.lib<cos_f32.obj>(.text)
                         rts2800_fpu32_fast_supplement.lib<sin_f32.obj>(.text)
                         rts2800_fpu32_fast_supplement.lib<sqrt_f32.obj>(.text)
                         rts2800_fpu32.lib<l_div.obj>(.text)
-                        *(ramfuncs)
+  */                      *(ramfuncs)
                         *(.TI.ramfunc)
                     }
                     LOAD = P_LS05 | P_D01 | P_GS05,

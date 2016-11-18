@@ -13,25 +13,26 @@
 #ifndef     __DEFINE_H__
 #define     __DEFINE_H__
 
-// frekvenca PWM-ja
-#define     SWITCH_FREQ     20000L
+// kako deluje izhodni pretovrnik 1 - eno vejno, 2 - dvovejno
+#define     BB_LEGS         2
 
-// veèkratnik preklopne frekvence
-#define     SAMP_PRESCALE   1
+// frekvenca PWM ja v Hz
+#define     SWITCH_FREQ     40000
 
-// Vzorèna frekvenca
-#define     SAMPLE_FREQ     (SWITCH_FREQ/SAMP_PRESCALE)
+// razmerje med preklopno in vzorèno frekvenco
+#define     SAMPLING_RATIO  2
+
+// frekvenca vzorèenja v HZ
+#define     SAMP_FREQ       (SWITCH_FREQ/SAMPLING_RATIO)
 
 // vzorèna perioda
-#define     SAMPLE_TIME     (1.0/SAMPLE_FREQ)
+#define     SAMPLE_TIME     (1.0/SAMP_FREQ)
 
-// katero strojno opremo uporabljam
-// 0 - FE sistem za vaje PMSM + DC + RM44,
-// 1 - RLS naprava verzija 1, LM10 ali RM44 ali AKSIM
-// 2 - RLC naprava verzija 2
-// 3 - FE sistem za študije PMSM + RM44
-// 4 - FE sistem za študeije PMSM 9 fazni + resolver + RMB28
-#define     HW_TYPE         4
+// frekvenca omrežja
+#define		GRID_FREQ		50
+
+// število vzorcev v eni periodi
+#define		SAMPLE_POINTS	(SAMP_FREQ/GRID_FREQ)
 
 // frekvenca procesorja v Hz
 #define     CPU_FREQ        200000000L
@@ -39,7 +40,25 @@
 // definicije matematiènih konstant
 #define     SQRT3           1.7320508075688772935274463415059
 #define     SQRT2           1.4142135623730950488016887242097
+#define     ZSQRT2          0.70710678118654752440084436210485
 #define     PI              3.1415926535897932384626433832795
+
+// maksimalna izhodna moc v wattih
+#define     P_MAX           400
+// maksimalni bremenski tok v amperih
+#define     I_MAX           20
+// maksimalna izhodna napetost
+#define     U_MAX           36
+// nastavljena napetost enosmernega tokokroga
+#define     U_DC_REF        40
+
+#define     CURRENT_GRID_LIM    20
+#define     CURRENT_BB_LIM      20
+#define     CURRENT_BB_LIM      20
+#define     NAP_GRID_RMS_MIN    10
+#define     NAP_GRID_RMS_MAX    30
+#define     U_DC_MAX            48
+#define     U_DC_MIN            0
 
 // deklaracije za logicne operacije
 //typedef enum {FALSE = 0, TRUE} bool;
