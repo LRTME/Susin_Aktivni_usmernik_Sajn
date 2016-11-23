@@ -73,6 +73,13 @@ PID_float   tok_bb1_reg = PID_FLOAT_DEFAULTS;
 PID_float   tok_bb2_reg = PID_FLOAT_DEFAULTS;
 SLEW_float  tok_bb_slew = SLEW_FLOAT_DEFAULTS;
 
+// sinhronizacija na omrežje
+float       sync_base_freq = SWITCH_FREQ;
+PID_float   sync_reg    = PID_FLOAT_DEFAULTS;
+float       sync_switch_freq = SWITCH_FREQ;
+float       sync_grid_freq = ((SWITCH_FREQ/SAMPLING_RATIO)/SAMPLE_POINTS);
+bool        sync_use = TRUE;
+
 // samo za statistiko meritev
 STAT_float  statistika = STAT_FLOAT_DEFAULTS;
 
@@ -132,6 +139,7 @@ int     interrupt_cnt = 0;
 
 void check_limits(void);
 void get_electrical(void);
+void sync(void);
 void input_bridge_control(void);
 void output_bb_control(void);
 
@@ -184,6 +192,9 @@ void interrupt PER_int(void)
     // vzorèim in poraèunam vse izpeljane velièine
     get_electrical();       // 32% cputime
 
+    // sinhroniziram na omrežje
+    sync();
+
     // preverim ali sem znotraj meja
     check_limits();         // 4% cputime
 
@@ -230,6 +241,29 @@ void interrupt PER_int(void)
     }
 
 }   // end of PWM_int
+
+#pragma CODE_SECTION(sync, "ramfuncs");
+void sync(void)
+{
+    sync_reg.Ref = 0;
+    sync_reg.Fdb = nap_grid_dft.SumA/nap_grid_rms;
+    PID_FLOAT_CALC(sync_reg);
+
+    sync_switch_freq = sync_base_freq + sync_reg.Out;
+
+    sync_grid_freq = ((sync_switch_freq/SAMPLING_RATIO)/SAMPLE_POINTS);
+
+    if (sync_use == TRUE)
+    {
+        BB_frequency(sync_switch_freq);
+        FB_frequency(sync_switch_freq);
+    }
+    else
+    {
+        BB_frequency(sync_base_freq);
+        FB_frequency(sync_base_freq);
+    }
+}
 
 #pragma CODE_SECTION(input_bridge_control, "ramfuncs");
 void input_bridge_control(void)
@@ -549,6 +583,12 @@ void PER_int_setup(void)
     tok_bb2_reg.Kff = tok_bb1_reg.Kff;
     tok_bb2_reg.OutMax = tok_bb1_reg.OutMax;
     tok_bb2_reg.OutMin = tok_bb1_reg.OutMin;
+
+    // regultaro frekvence
+    sync_reg.Kp = 1000;
+    sync_reg.Ki = 0;
+    sync_reg.OutMax = +SWITCH_FREQ/10;
+    sync_reg.OutMin = -SWITCH_FREQ/10;
 
     // inicializiram statistiko
     STAT_FLOAT_MACRO_INIT(statistika);

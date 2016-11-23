@@ -355,7 +355,7 @@ void BB_frequency(float frekvenca)
     long celi_del;
 
     // naracunam TBPER (CPU_FREQ / SAMPLING_FREQ) - 1
-    temp_tbper = (CPU_FREQ/2)/frekvenca;
+    temp_tbper = ((CPU_FREQ/2)/2)/frekvenca;
 
     // izlocim celi del in ostanek
     celi_del = (long)temp_tbper;
