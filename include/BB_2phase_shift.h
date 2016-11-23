@@ -25,7 +25,7 @@
 #define     BB_MODUL2      EPwm4Regs
 
 // perioda casovnika (v procesorskih cikilh) 
-#define     BB_PERIOD      ((CPU_FREQ/SWITCH_FREQ)/2 - 1)
+#define     BB_PERIOD      (((CPU_FREQ/2)/SWITCH_FREQ)/2 - 1)
 
 // dead time (v procesorskih cikilh)
 #define     BB_DEAD_TIME   40 //5

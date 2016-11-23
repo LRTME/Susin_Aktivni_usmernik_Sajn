@@ -112,6 +112,10 @@ void ADC_init(void)
     AdcbRegs.ADCSOC1CTL.bit.ACQPS = acqps_set;  //sample window
     AdcbRegs.ADCSOC1CTL.bit.TRIGSEL = 6;        //trigger on ePWM1 SOCB
 
+    AdcbRegs.ADCSOC2CTL.bit.CHSEL = 1;          //SOC1 will convert pin B1
+    AdcbRegs.ADCSOC2CTL.bit.ACQPS = acqps_set;  //sample window
+    AdcbRegs.ADCSOC2CTL.bit.TRIGSEL = 6;        //trigger on ePWM1 SOCB
+
     // ADCC channel setup
     AdccRegs.ADCSOC0CTL.bit.CHSEL = 3;          //SOC0 will convert pin C3
     AdccRegs.ADCSOC0CTL.bit.ACQPS = acqps_set;  //sample window

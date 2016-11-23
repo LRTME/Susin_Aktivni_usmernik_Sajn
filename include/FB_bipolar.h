@@ -30,7 +30,7 @@
 #define     FB_DEBUG        2
 
 // perioda casovnika (v procesorskih cikilh) 
-#define     FB_PERIOD       ((CPU_FREQ/SWITCH_FREQ)/2 - 1)   //50us
+#define     FB_PERIOD       (((CPU_FREQ/2)/SWITCH_FREQ)/2 - 1)   //50us
 
 // dead time (v procesorskih cikilh)
 #define     FB_DEAD_TIME    (40)

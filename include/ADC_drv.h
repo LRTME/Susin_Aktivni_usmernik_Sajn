@@ -20,23 +20,22 @@
 // kje se nahajajo rezultati
 
 // startani na SOCA
-#define     TEMPERATURA     (AdcdResultRegs.ADCRESULT0)
-#define     TOK_GRID        (AdcaResultRegs.ADCRESULT0)
-#define     TOK_BB1         (AdcaResultRegs.ADCRESULT1)
-#define     TOK_BB2         (AdcbResultRegs.ADCRESULT0)
-#define     TOK_OUT         (AdcaResultRegs.ADCRESULT2)
+#define     TEMPERATURA     (AdcdResultRegs.ADCRESULT0) // A5 -> D2
+#define     TOK_GRID        (AdcaResultRegs.ADCRESULT0) // B0 -> A0
+#define     TOK_BB1         (AdcaResultRegs.ADCRESULT1) // B1 -> A1
+#define     TOK_BB2         (AdcbResultRegs.ADCRESULT0) // A0 -> B0
+#define     TOK_OUT         (AdcaResultRegs.ADCRESULT2) // B2 -> A3
 
 // startani na SOCB
-#define     NAP_CAP         (AdcaResultRegs.ADCRESULT3)
-#define     NAP_OUT         (AdcbResultRegs.ADCRESULT1)
-#define     NAP_DC          (AdcbResultRegs.ADCRESULT2)
-#define     NAP_GRID        (AdcdResultRegs.ADCRESULT1)
+#define     NAP_CAP         (AdcaResultRegs.ADCRESULT3) // B3 -> A4
+#define     NAP_OUT         (AdcbResultRegs.ADCRESULT1) // A2 -> B3
+#define     NAP_DC          (AdcbResultRegs.ADCRESULT2) // A1 -> B1
+#define     NAP_GRID        (AdcdResultRegs.ADCRESULT1) // A4 -> D1
 
-#define     POT_I_FINE      (AdccResultRegs.ADCRESULT0)
-#define     POT_I_COARSE    (AdccResultRegs.ADCRESULT1)
-#define     POT_U_FINE      (AdcaResultRegs.ADCRESULT4)
-#define     POT_U_COARSE    (AdccResultRegs.ADCRESULT2)
-#define     TEMP_CPU        (AdcdResultRegs.ADCRESULT0)
+#define     POT_I_FINE      (AdccResultRegs.ADCRESULT0) // B6 -> C3
+#define     POT_I_COARSE    (AdccResultRegs.ADCRESULT1) // B7 -> C4
+#define     POT_U_FINE      (AdcaResultRegs.ADCRESULT4) // B4 -> A5
+#define     POT_U_COARSE    (AdccResultRegs.ADCRESULT2) // B5 -> C2
 
 /**************************************************************
 * inicializiramo ADC

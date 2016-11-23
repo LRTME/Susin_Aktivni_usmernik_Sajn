@@ -113,7 +113,7 @@ void PCB_res_relay_off(void)
 **************************************************************/
 void PCB_out_relay_on(void)
 {
-    GpioDataRegs.GPCSET.bit.GPIO72 = 1;
+    GpioDataRegs.GPASET.bit.GPIO21 = 1;
 }
 
 /**************************************************************
@@ -231,7 +231,7 @@ bool PCB_reset_SW(void)
 **************************************************************/
 bool PCB_HW_trip(void)
 {
-    if (GpioDataRegs.GPADAT.bit.GPIO12 == 1)
+    if (GpioDataRegs.GPADAT.bit.GPIO16 == 1)
     {
         return (FALSE);
     }
@@ -263,18 +263,22 @@ void PCB_init(void)
     // GPIO21 - out relay
     GPIO_SetupPinMux(21, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(21, GPIO_OUTPUT, GPIO_PUSHPULL);
+    PCB_out_relay_off();
     
     // GPIO72  res relay
     GPIO_SetupPinMux(72, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(72, GPIO_OUTPUT, GPIO_PUSHPULL);
+    PCB_res_relay_off();
     
     // GPIO70 - in relay
     GPIO_SetupPinMux(70, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(70, GPIO_OUTPUT, GPIO_PUSHPULL);
+    PCB_in_relay_off();
     
     // GPIO23 load relay
     GPIO_SetupPinMux(23, GPIO_MUX_CPU1, 0);
     GPIO_SetupPinOptions(23, GPIO_OUTPUT, GPIO_PUSHPULL);
+    PCB_load_relay_off();
 
     // GPIO28 - Temp status
     GPIO_SetupPinMux(28, GPIO_MUX_CPU1, 0);
