@@ -12,10 +12,13 @@
 ****************************************************************/
 #include "globals.h"
 
+// stevec prekinitev
+float    interrupt_cnt = 0;
+
 // spremenljivka stanja
 volatile enum STATE state = Initialization;
 
-extern volatile enum MODE mode = Control;
+volatile enum MODE mode = Control;
 
 //struktura z zastavicami napake
 struct FAULT_FLAGS fault_flags =

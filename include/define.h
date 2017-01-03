@@ -13,6 +13,10 @@
 #ifndef     __DEFINE_H__
 #define     __DEFINE_H__
 
+#include	"stddef.h"
+#include	"stdbool.h"
+#include	"stdint.h"
+
 // kako deluje izhodni pretovrnik 1 - eno vejno, 2 - dvovejno
 #define     BB_LEGS         2
 

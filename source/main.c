@@ -32,6 +32,9 @@ void main(void)
     // basic vector table
     InitPieVectTable();
 
+    // inicializacija komunikacijoe
+    COMM_initialization();
+
     // inicializiram ADC
     ADC_init();
 

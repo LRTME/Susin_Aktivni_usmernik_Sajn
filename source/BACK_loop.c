@@ -1,19 +1,22 @@
 /****************************************************************
-* FILENAME:     BACK_loop.c
-* DESCRIPTION:  background code
-* AUTHOR:       Mitja Nemec
-* START DATE:   16.1.2009
-* VERSION:      1.0
-*
-* CHANGES : 
-* VERSION   DATE        WHO         DETAIL 
-* 1.0       16.1.2009   Mitja Nemec Initial version
-*
-****************************************************************/
+ * FILENAME:     BACK_loop.c
+ * DESCRIPTION:  background code
+ * AUTHOR:       Mitja Nemec
+ *
+ ****************************************************************/
 
 #include "BACK_loop.h"
 
 // deklaracije lokalnih spremenljivk
+static FATFS	g_sFatFs;
+static FIL		g_sFileObject;
+
+char	string[] = "Temperatura je 00 C\r\n";
+
+// temperatura v string
+int desetice = 0;
+int enice = 0;
+
 bool en_tipka = FALSE;  // pulz, ko pritisnemo na tipko
 bool reset_tipka = FALSE;  // pulz, ko pritisnemo na tipko
 
@@ -29,8 +32,8 @@ int init_done_cnt = 0;
 int fault_sensed_cnt = 0;
 
 // deklaracije zunanjih spremenljivk
-extern int      interrupt_cnt;
 extern float    nap_dc;
+extern float	cpu_temp;
 
 // pototipi funkcij
 void scan_keys(void);
@@ -55,10 +58,60 @@ extern  ABF_float   i_cap_dc;
 **************************************************************/
 void BACK_loop(void)
 {
+	// fat file system result code
+    FRESULT fresult;
+    UINT usBytesWriten;
+
+    // priklopim kartico
+    fresult = f_mount(&g_sFatFs, "0", 1);
+    if(fresult != FR_OK)
+    {
+        asm(" ESTOP0");
+    }
+
+    // if file does not exist create it
+    fresult = f_open(&g_sFileObject, "temp.csv", FA_CREATE_NEW | FA_WRITE);
+    f_close(&g_sFileObject);
+
+    // Open the file for writing.
+    fresult = f_open(&g_sFileObject, "temp.csv", FA_WRITE);
+    if(fresult != FR_OK)
+    {
+        asm(" ESTOP0");
+    }
+    fresult = f_sync(&g_sFileObject);
+
+    // go to the end of file
+    fresult = f_lseek(&g_sFileObject, f_size(&g_sFileObject));
+
+    // zapišem string
+    //fresult = f_puts(string, &g_sFileObject);
+    //fresult = f_printf(&g_sFileObject, "%s", string);
+    fresult = f_write(&g_sFileObject, string, sizeof(string)-1, &usBytesWriten);
+    if(fresult != FR_OK)
+    {
+        asm(" ESTOP0");
+    }
+    // pocakam, da se uspesno zapise
+    do
+    {
+    	fresult = f_sync(&g_sFileObject);
+    }
+    while (fresult != FR_OK);
+
+    // zaprem datoteko
+    fresult = f_close(&g_sFileObject);
+    if(fresult != FR_OK)
+    {
+        asm(" ESTOP0");
+    }
 
     // lokalne spremenljivke
     while (1)
     {
+        // hendlanje komunikacije
+        COMM_runtime();
+
         // na podlagi mejne frekvence in dušenj izraèunam a,b koeficienta
         i_cap_abf.Beta = (cutoff_freq_out*2*PI/SAMP_FREQ) * (cutoff_freq_out*2*PI/SAMP_FREQ);
         i_cap_abf.Alpha = 2*damping_out*sqrt(i_cap_abf.Beta)- i_cap_abf.Beta/2;

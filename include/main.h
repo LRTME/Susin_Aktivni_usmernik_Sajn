@@ -28,5 +28,6 @@
 #include    "FLT_int.h"
 #include    "PCB_util.h"
 
+#include	"COMM_handlers.h"
 
 #endif // end of __MAIN_H__ definition

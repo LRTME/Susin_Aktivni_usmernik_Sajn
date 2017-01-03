@@ -1,10 +1,10 @@
 /****************************************************************
- * FILENAME:     PER_int.c
- * DESCRIPTION:  periodic interrupt code
- * AUTHOR:       Mitja Nemec
- * DATE:         16.1.2009
- *
- ****************************************************************/
+* FILENAME:     PER_int.c
+* DESCRIPTION:  periodic interrupt code
+* AUTHOR:       Mitja Nemec
+* DATE:         16.1.2009
+*
+****************************************************************/
 #include    "PER_int.h"
 #include    "TIC_toc.h"
 
@@ -123,9 +123,14 @@ float	pot_u_fine_old = 0.0;
 float   pot_i_coarse_old = 0.0;
 float   pot_i_fine_old = 0.0;
 
-
-// obremenjenost procesorja
+// za oceno obremenjenosti CPU-ja
 float   cpu_load  = 0.0;
+long    interrupt_cycles = 0;
+
+long 	sd_card_cnt = 0;
+
+// temperatura procesorja
+float	cpu_temp = 0.0;
 
 // za vklop bremena
 float	ref_gen_load = 0.1;
@@ -135,7 +140,6 @@ volatile enum    {Pots = 0, Ref_generator} ref_select = Pots;
 
 // spremenljikva s katero štejemo kolikokrat se je prekinitev predolgo izvajala
 int     interrupt_overflow_counter = 0;
-int     interrupt_cnt = 0;
 
 void check_limits(void);
 void get_electrical(void);
@@ -175,6 +179,14 @@ void interrupt PER_int(void)
         interrupt_cnt = 0;
     }
 
+    // vsakih 10ms poklicem SD_card timer handler
+    sd_card_cnt = sd_card_cnt + 1;
+    if (sd_card_cnt >= SAMP_FREQ/100)
+    {
+    	disk_timerproc();
+    	sd_card_cnt = 0;
+    }
+
     // generiram želeno vrednost
     REF_gen();
 
@@ -187,7 +199,6 @@ void interrupt PER_int(void)
     {
         PCB_load_relay_off();
     }
-
 
     // vzorèim in poraèunam vse izpeljane velièine
     get_electrical();       // 32% cputime
@@ -224,12 +235,12 @@ void interrupt PER_int(void)
        saj je èas izvajanja prekinitve predolg
        vse skupaj se mora zgoditi najmanj 10krat,
        da reèemo da je to res problem
-     */
+    */
     if (EPwm1Regs.ETFLG.bit.INT == TRUE)
     {
         // povecam stevec, ki steje take dogodke
         interrupt_overflow_counter = interrupt_overflow_counter + 1;
-
+        
         // in ce se je vse skupaj zgodilo 10 krat se ustavim
         // v kolikor uC krmili kakšen resen HW, potem moèno
         // proporoèam lepše "hendlanje" takega dogodka
@@ -509,17 +520,24 @@ void output_bb_control(void)
 void PER_int_setup(void)
 {
     // inicializiram data logger
-    dlog.iptr1 = &nap_dc;
-    dlog.iptr2 = &tok_out;
-    dlog.iptr3 = &tok_dc_abf;
-    dlog.iptr4 = &nap_dc_reg.Out;
-
-    dlog.trig = &ref_gen.kot;
-    dlog.trig_value = 0.98;
-    dlog.slope = Positive;
+    dlog.mode = Single;
+    dlog.auto_time = 1;
+    dlog.holdoff_time = 1;
 
     dlog.prescalar = 10;
-    dlog.mode = Normal;
+
+    dlog.slope = Positive;
+    dlog.trig = &ref_gen.kot;
+    dlog.trig_value = 0.98;
+
+    dlog.iptr1 = &nap_grid;
+    dlog.iptr2 = &tok_grid;
+    dlog.iptr3 = &nap_dc;
+    dlog.iptr4 = &i_cap_dc.i_cap_estimated;
+    dlog.iptr5 = &tok_dc_abf;
+    dlog.iptr6 = &nap_out;
+    dlog.iptr7 = &tok_out;
+    dlog.iptr8 = &tok_out_abf;
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -586,7 +604,7 @@ void PER_int_setup(void)
 
     // regultaro frekvence
     sync_reg.Kp = 1000;
-    sync_reg.Ki = 0;
+    sync_reg.Ki = 0.01;
     sync_reg.OutMax = +SWITCH_FREQ/10;
     sync_reg.OutMin = -SWITCH_FREQ/10;
 

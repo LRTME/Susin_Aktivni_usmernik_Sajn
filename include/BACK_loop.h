@@ -19,6 +19,10 @@
 #include    "FB_bipolar.h"
 
 #include 	"PCB_util.h"
+
+#include	"COMM_handlers.h"
+
+#include	"ff.h"
     
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem
