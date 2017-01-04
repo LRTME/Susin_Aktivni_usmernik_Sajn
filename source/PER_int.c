@@ -183,7 +183,7 @@ void interrupt PER_int(void)
     sd_card_cnt = sd_card_cnt + 1;
     if (sd_card_cnt >= SAMP_FREQ/100)
     {
-    	disk_timerproc();
+        SD_tick_timer();;
     	sd_card_cnt = 0;
     }
 

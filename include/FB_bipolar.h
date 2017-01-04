@@ -26,7 +26,7 @@
 #define     FB_MODUL2        EPwm2Regs
 
 // delovanje modula ob debug-dogodkih
-// (0-stop at zero, 1-stop immediately, 2-run free)
+// (0-stop immediately, 1-stop at zero, 2-run free)
 #define     FB_DEBUG        2
 
 // perioda casovnika (v procesorskih cikilh) 

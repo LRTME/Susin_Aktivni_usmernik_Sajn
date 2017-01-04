@@ -30,4 +30,7 @@
 
 #include	"COMM_handlers.h"
 
+#include    "SD_card.h"
+#include    "UP_time.h"
+
 #endif // end of __MAIN_H__ definition

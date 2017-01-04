@@ -221,12 +221,12 @@ void BB_init(void)
 
     // debug mode behafiour
     #if BB_DEBUG_MODE == 0 //#if FB_DEBUG == 0
-    BB_MODUL1.TBCTL.bit.FREE_SOFT = 1;      // stop after current cycle
-    BB_MODUL2.TBCTL.bit.FREE_SOFT = 1;      // stop after current cycle
-    #endif
-    #if BB_DEBUG_MODE == 1 //#if FB_DEBUG == 1
     BB_MODUL1.TBCTL.bit.FREE_SOFT = 0;      // stop after current cycle
     BB_MODUL2.TBCTL.bit.FREE_SOFT = 0;      // stop after current cycle
+    #endif
+    #if BB_DEBUG_MODE == 1 //#if FB_DEBUG == 1
+    BB_MODUL1.TBCTL.bit.FREE_SOFT = 1;      // stop after current cycle
+    BB_MODUL2.TBCTL.bit.FREE_SOFT = 1;      // stop after current cycle
     #endif
     #if BB_DEBUG_MODE == 2 //#if FB_DEBUG == 2
     BB_MODUL1.TBCTL.bit.FREE_SOFT = 3;      // run free

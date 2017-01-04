@@ -22,7 +22,8 @@
 
 #include	"COMM_handlers.h"
 
-#include	"ff.h"
+#include    "SD_card.h"
+#include    "UP_time.h"
     
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem

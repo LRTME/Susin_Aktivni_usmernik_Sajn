@@ -8,14 +8,6 @@
 #include "BACK_loop.h"
 
 // deklaracije lokalnih spremenljivk
-static FATFS	g_sFatFs;
-static FIL		g_sFileObject;
-
-char	string[] = "Temperatura je 00 C\r\n";
-
-// temperatura v string
-int desetice = 0;
-int enice = 0;
 
 bool en_tipka = FALSE;  // pulz, ko pritisnemo na tipko
 bool reset_tipka = FALSE;  // pulz, ko pritisnemo na tipko
@@ -25,7 +17,6 @@ bool pulse_500ms = FALSE;
 bool pulse_100ms = FALSE;
 bool pulse_50ms = FALSE;
 bool pulse_10ms = FALSE;
-
 
 // stevec, za pavzo po inicializaciji
 int init_done_cnt = 0;
@@ -53,59 +44,12 @@ float   cutoff_freq_dc = 500;
 float   damping_dc = 0.707;
 extern  ABF_float   i_cap_abf;
 extern  ABF_float   i_cap_dc;
+
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem
 **************************************************************/
 void BACK_loop(void)
 {
-	// fat file system result code
-    FRESULT fresult;
-    UINT usBytesWriten;
-
-    // priklopim kartico
-    fresult = f_mount(&g_sFatFs, "0", 1);
-    if(fresult != FR_OK)
-    {
-        asm(" ESTOP0");
-    }
-
-    // if file does not exist create it
-    fresult = f_open(&g_sFileObject, "temp.csv", FA_CREATE_NEW | FA_WRITE);
-    f_close(&g_sFileObject);
-
-    // Open the file for writing.
-    fresult = f_open(&g_sFileObject, "temp.csv", FA_WRITE);
-    if(fresult != FR_OK)
-    {
-        asm(" ESTOP0");
-    }
-    fresult = f_sync(&g_sFileObject);
-
-    // go to the end of file
-    fresult = f_lseek(&g_sFileObject, f_size(&g_sFileObject));
-
-    // zapišem string
-    //fresult = f_puts(string, &g_sFileObject);
-    //fresult = f_printf(&g_sFileObject, "%s", string);
-    fresult = f_write(&g_sFileObject, string, sizeof(string)-1, &usBytesWriten);
-    if(fresult != FR_OK)
-    {
-        asm(" ESTOP0");
-    }
-    // pocakam, da se uspesno zapise
-    do
-    {
-    	fresult = f_sync(&g_sFileObject);
-    }
-    while (fresult != FR_OK);
-
-    // zaprem datoteko
-    fresult = f_close(&g_sFileObject);
-    if(fresult != FR_OK)
-    {
-        asm(" ESTOP0");
-    }
-
     // lokalne spremenljivke
     while (1)
     {
@@ -123,6 +67,13 @@ void BACK_loop(void)
         // generiranje pulzov in branje tipk
         pulse_gen();
         scan_keys();
+
+        // enkrat na sekundo poveèam števec uptime
+        // in ga zapišem v datoteko
+        if (pulse_1000ms == TRUE)
+        {
+            UP_inc();
+        }
 
         /*****************/
         /* state machine */

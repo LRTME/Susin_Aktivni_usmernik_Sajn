@@ -2,12 +2,6 @@
 * FILENAME:     main.c
 * DESCRIPTION:  initialization code
 * AUTHOR:       Mitja Nemec
-* START DATE:   16.1.2009
-* VERSION:      1.0
-*
-* CHANGES : 
-* VERSION   DATE        WHO         DETAIL 
-* 1.0       16.1.2009   Mitja Nemec Initial version
 *
 ****************************************************************/
 #include "main.h"
@@ -21,8 +15,8 @@ void main(void)
     InitSysCtrl();
     
     // GPIO - najprej
+labela:
     InitGpio();
-
     // inicializiram PCB
     PCB_init();
 
@@ -31,6 +25,9 @@ void main(void)
 
     // basic vector table
     InitPieVectTable();
+
+    // inicializiram SD kartico
+    SD_init();
 
     // inicializacija komunikacijoe
     COMM_initialization();
@@ -55,7 +52,7 @@ void main(void)
     // omogocim prekinitve
     EINT;
     ERTM;
-labela:
+
     // pocakam, da se izvede par prekinitev, da zacnem brcati psa cuvaja
     DELAY_US(1000);
 
@@ -72,6 +69,9 @@ labela:
     fault_flags.cpu_overrun = FALSE;
     fault_flags.fault_registered = FALSE;
     fault_flags.HW_trip = FALSE;
+
+    // inicializiram uptime števec
+    UP_init();
 
     // inicializiram zašèitno prekinitev,
     // in sicer po tem ko resetiram latch
@@ -96,6 +96,8 @@ labela:
     if (PCB_HW_trip() == TRUE)
     {
         // zato kar resetiram MCU, da se zaženemo še enkrat
+        asm(" ESTOP0");
+        DINT;
         goto labela;
         /*
         asm(" ESTOP0");

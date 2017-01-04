@@ -31,8 +31,8 @@
 #define     BB_DEAD_TIME   40 //5
 
 // nacin delovanja casovnika ob emulation stop
-// (0-stop at zero, 1-stop immediately, 2-run free)
-#define     BB_DEBUG_MODE  2//
+// (0-stop immediately, 1-stop at zero, 2-run free)
+#define     BB_DEBUG_MODE  2
 
 // definicije za status mostica
 enum BB_STATE { DISABLE=0, ENABLE, BOOTSTRAP, TRIP };

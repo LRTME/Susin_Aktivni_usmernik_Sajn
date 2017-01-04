@@ -129,12 +129,12 @@ void FB_init(void)
     
     // debug mode behafiour
     #if FB_DEBUG == 0
-    FB_MODUL1.TBCTL.bit.FREE_SOFT = 1;  // stop after current cycle
-    FB_MODUL2.TBCTL.bit.FREE_SOFT = 1;  // stop after current cycle
-    #endif
-    #if FB_DEBUG == 1
     FB_MODUL1.TBCTL.bit.FREE_SOFT = 0;  // stop after current cycle
     FB_MODUL2.TBCTL.bit.FREE_SOFT = 0;  // stop after current cycle
+    #endif
+    #if FB_DEBUG == 1
+    FB_MODUL1.TBCTL.bit.FREE_SOFT = 1;  // stop after current cycle
+    FB_MODUL2.TBCTL.bit.FREE_SOFT = 1;  // stop after current cycle
     #endif
     #if FB_DEBUG == 2
     FB_MODUL1.TBCTL.bit.FREE_SOFT = 3;  // run free

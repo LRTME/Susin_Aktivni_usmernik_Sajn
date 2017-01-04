@@ -13,7 +13,7 @@
 #include "globals.h"
 
 // stevec prekinitev
-float    interrupt_cnt = 0;
+float   interrupt_cnt = 0;
 
 // spremenljivka stanja
 volatile enum STATE state = Initialization;
