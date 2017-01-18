@@ -566,11 +566,11 @@ void PER_int_setup(void)
     nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
 
     // inicializiram regulator omreznega toka
-    tok_grid_reg.Kp = 0.2; //0.2;
-    tok_grid_reg.Ki = 0.008; //0.008;
-    tok_grid_reg.Kff = 1.2; //0.8;
-    tok_grid_reg.OutMax = +1.0;
-    tok_grid_reg.OutMin = -1.0;
+    tok_grid_reg.Kp = 0.2; 			//0.2;
+    tok_grid_reg.Ki = 0.008; 		//0.008;
+    tok_grid_reg.Kff = 1.2; 		//0.8;
+    tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
+    tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
 
     // inicializiram rampo izhodne napetosti
     nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer
@@ -593,8 +593,8 @@ void PER_int_setup(void)
     tok_bb1_reg.Kp = 0.1;
     tok_bb1_reg.Ki = 0.001;
     tok_bb1_reg.Kff = 0.8;
-    tok_bb1_reg.OutMax = +1.0;
-    tok_bb1_reg.OutMin = -1.0;
+    tok_bb1_reg.OutMax = +0.99; // zaradi bootstrap driverjev ne gre do 1.0
+    tok_bb1_reg.OutMin = -0.99; // zaradi bootstrap driverjev ne gre do 1.0
 
     tok_bb2_reg.Kp = tok_bb1_reg.Kp;
     tok_bb2_reg.Ki = tok_bb1_reg.Ki;
