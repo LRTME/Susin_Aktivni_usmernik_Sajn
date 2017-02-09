@@ -95,16 +95,16 @@ float       tok_dc_abf = 0.0;
 DELAY_float i_grid_delay = DELAY_FLOAT_DEFAULTS;
 
 // filtriranje izhoda ocene
-DC_float 	i_dc_f = DC_FLOAT_DEFAULTS;
+DC_float    i_dc_f = DC_FLOAT_DEFAULTS;
 
 // filtriranje meritve
-DC_float	tok_out_f = DC_FLOAT_DEFAULTS;
+DC_float    tok_out_f = DC_FLOAT_DEFAULTS;
 
 // izbira ocene izhodnega toka
 volatile enum   {Meas_out = 0, ABF_out, KF_out, None_out } tok_out_source = Meas_out;
 
 // izbira ocene dc toka
-volatile enum   {Meas_dc = 0, ABF_dc, KF_dc, None_dc } tok_dc_source = None_dc;
+volatile enum   {Meas_dc = 0, ABF_dc, KF_dc, None_dc, Power_out } tok_dc_source = ABF_dc;
 
 // izhodna moc
 float   power_out = 0.0;
@@ -118,8 +118,8 @@ float   pot_i_fine = 0.0;
 float   pot_u_coarse = 0.0;
 float   pot_u_fine = 0.0;
 
-float	pot_u_coarse_old = 0.0;
-float	pot_u_fine_old = 0.0;
+float   pot_u_coarse_old = 0.0;
+float   pot_u_fine_old = 0.0;
 float   pot_i_coarse_old = 0.0;
 float   pot_i_fine_old = 0.0;
 
@@ -127,13 +127,13 @@ float   pot_i_fine_old = 0.0;
 float   cpu_load  = 0.0;
 long    interrupt_cycles = 0;
 
-long 	sd_card_cnt = 0;
+long    sd_card_cnt = 0;
 
 // temperatura procesorja
-float	cpu_temp = 0.0;
+float   cpu_temp = 0.0;
 
 // za vklop bremena
-float	ref_gen_load = 0.1;
+float   ref_gen_load = 0.1;
 
 // kdo generira željene vrednosti
 volatile enum    {Pots = 0, Ref_generator} ref_select = Pots;
@@ -184,7 +184,7 @@ void interrupt PER_int(void)
     if (sd_card_cnt >= SAMP_FREQ/100)
     {
         SD_tick_timer();;
-    	sd_card_cnt = 0;
+        sd_card_cnt = 0;
     }
 
     // generiram želeno vrednost
@@ -201,19 +201,19 @@ void interrupt PER_int(void)
     }
 
     // vzorèim in poraèunam vse izpeljane velièine
-    get_electrical();       // 32% cputime
+    get_electrical();
 
     // sinhroniziram na omrežje
     sync();
 
     // preverim ali sem znotraj meja
-    check_limits();         // 4% cputime
+    check_limits();
 
     // regulacija napetosti enosmernega tokokroga
-    input_bridge_control(); // 25% cputime
+    input_bridge_control();
 
     // regulacija izhodne napetosti
-    output_bb_control();    // 12% cputime
+    output_bb_control();
 
     // osvežim data loger
     // Initialization = 0, Startup, Standby, Ramp_up, Work, Ramp_down, Fault, Fault_sensed
@@ -224,7 +224,7 @@ void interrupt PER_int(void)
         || (state == Work)
         || (state == Ramp_down))
     {
-        DLOG_GEN_update();  // 5% cputime
+        DLOG_GEN_update();
     }
 
     // ustavim štoparico
@@ -289,28 +289,39 @@ void input_bridge_control(void)
         SLEW_FLOAT_CALC(nap_dc_slew)
 
         // izvedem napetostni regulator
-      	nap_dc_reg.Ref = nap_dc_slew.Out;
+        nap_dc_reg.Ref = nap_dc_slew.Out;
         nap_dc_reg.Fdb = napetost_dc_filtered;
-        //nap_dc_reg.Ff = SQRT2 * power_out / nap_grid_rms;
+        // izberem vir direktne krmilne veje
+        // samo v primeru testiranja vhodnega pretvornika, ko je tok enosmernega
+        // tokokroga peljan èez tokovni senzor na izhodu
         if (tok_out_source == Meas_dc)
         {
             nap_dc_reg.Ff = tok_out_f.Mean * napetost_dc_filtered * SQRT2 / nap_grid_rms;
         }
+        // privzeto uporabim ABF za oceno DC toka in posledièno feedforward
         if (tok_dc_source == ABF_dc)
-
         {
             nap_dc_reg.Ff = tok_dc_abf * napetost_dc_filtered * SQRT2 / nap_grid_rms;
         }
+        // brez direktne krmilne veje
         if (tok_dc_source == None_dc)
         {
             nap_out_reg.Ff = 0.0;
         }
+        // ocena preko izhodne moèi
+        if (tok_dc_source == Power_out)
+        {
+            nap_dc_reg.Ff = power_out * SQRT2 / nap_grid_rms;
+        }
+        
         PID_FLOAT_CALC(nap_dc_reg);
 
         // izvedem tokovni regulator
+        // tega bi veljalo zamenjati za PR regulator
+        // ampak samo v primeru ko se sinhroniziram na omrežje
         tok_grid_reg.Ref = -nap_dc_reg.Out * nap_grid_form;
         tok_grid_reg.Fdb = tok_grid;
-        tok_grid_reg.Ff = nap_grid/nap_dc; // nap_grid_dft.Out;
+        tok_grid_reg.Ff = nap_grid/nap_dc;
         PID_FLOAT_CALC(tok_grid_reg);
 
         // posljem vse skupaj na mostic
@@ -328,189 +339,190 @@ void input_bridge_control(void)
 #pragma CODE_SECTION(output_bb_control, "ramfuncs");
 void output_bb_control(void)
 {
-	if (mode == Control)
-	{
-		// regulacija deluje samo v teh primerih
-		if (state == Ramp_up)
-		{
-			// zeljeno vrednost napetosti doloèa generator rampe
-			nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
-			nap_out_slew.Slope_down = nap_out_slew.Slope_up;
-			if (ref_select == Pots)
-			{
-				nap_out_slew.In = nap_out;
-			}
-			else
-			{
-				nap_out_slew.In = ref_gen.out;
-			}
-			SLEW_FLOAT_CALC(nap_out_slew);
+    if (mode == Control)
+    {
+        // regulacija deluje samo v teh primerih
+        if (state == Ramp_up)
+        {
+            // zeljeno vrednost napetosti doloèa generator rampe
+            nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
+            nap_out_slew.Slope_down = nap_out_slew.Slope_up;
+            if (ref_select == Pots)
+            {
+                nap_out_slew.In = nap_out;
+            }
+            else
+            {
+                nap_out_slew.In = ref_gen.out;
+            }
+            SLEW_FLOAT_CALC(nap_out_slew);
 
-			// ponastavim meje
-			nap_out_reg.OutMax = pot_i_coarse * I_MAX + pot_i_fine * I_MAX * 0.05;
-			nap_out_reg.OutMin = -nap_out_reg.OutMax;
+            // ponastavim meje
+            nap_out_reg.OutMax = pot_i_coarse * I_MAX + pot_i_fine * I_MAX * 0.05;
+            nap_out_reg.OutMin = -nap_out_reg.OutMax;
 
-			// napetostni regulator
-			nap_out_reg.Ref = nap_out_slew.Out;
-			nap_out_reg.Fdb = nap_cap;
-			if (tok_out_source == Meas_out)
-			{
-				nap_out_reg.Ff = tok_out;
-			}
-			if (tok_out_source == ABF_out)
-			{
-				nap_out_reg.Ff = tok_out_abf;
-			}
-			if (tok_out_source == KF_out)
-			{
-				nap_out_reg.Ff = 0.0;
-			}
-			if (tok_out_source == None_out)
-			{
-				nap_out_reg.Ff = 0.0;
-			}
-			PID_FLOAT_CALC(nap_out_reg)
+            // napetostni regulator
+            nap_out_reg.Ref = nap_out_slew.Out;
+            nap_out_reg.Fdb = nap_cap;
+            if (tok_out_source == Meas_out)
+            {
+                nap_out_reg.Ff = tok_out;
+            }
+            if (tok_out_source == ABF_out)
+            {
+                nap_out_reg.Ff = tok_out_abf;
+            }
+            if (tok_out_source == KF_out)
+            {
+                nap_out_reg.Ff = 0.0;
+            }
+            if (tok_out_source == None_out)
+            {
+                nap_out_reg.Ff = 0.0;
+            }
+            PID_FLOAT_CALC(nap_out_reg)
 
-			// sedaj pa se tokovna regulatorja/ ali pa samo eden
-			#if BB_LEGS == 2
-			tok_bb1_reg.Ref = nap_out_reg.Out * 0.5;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            // sedaj pa se tokovna regulatorja/ ali pa samo eden
+            #if BB_LEGS == 2
+            tok_bb1_reg.Ref = nap_out_reg.Out * 0.5;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			tok_bb2_reg.Ref = nap_out_reg.Out * 0.5;
-			tok_bb2_reg.Fdb = tok_bb2;
-			tok_bb2_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb2_reg);
+            tok_bb2_reg.Ref = nap_out_reg.Out * 0.5;
+            tok_bb2_reg.Fdb = tok_bb2;
+            tok_bb2_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb2_reg);
 
-			BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
-			#endif
-			#if BB_LEGS == 1
-			tok_bb1_reg.Ref = nap_out_reg.Out;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
+            #endif
+            #if BB_LEGS == 1
+            tok_bb1_reg.Ref = nap_out_reg.Out;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			BB_update(tok_bb1_reg.Out, 0.0);
-			#endif
-		}
-		else if (state == Work)
-		{
-			// zeljeno vrednost napetosti doloèa potenciometer
-			nap_out_slew.Slope_up = 1000.0 * SAMPLE_TIME;  // 1000 V/s
-			nap_out_slew.Slope_down = nap_out_slew.Slope_up;
-			if (ref_select == Pots)
-			{
-				nap_out_slew.In = pot_u_coarse * U_MAX + pot_u_fine * U_MAX * 0.05;
-			}
-			else
-			{
-				nap_out_slew.In = ref_gen.out;
-			}
-			SLEW_FLOAT_CALC(nap_out_slew);
+            BB_update(tok_bb1_reg.Out, 0.0);
+            #endif
+        }
+        else if (state == Work)
+        {
+            // zeljeno vrednost napetosti doloèa potenciometer
+            nap_out_slew.Slope_up = 1000.0 * SAMPLE_TIME;  // 1000 V/s
+            nap_out_slew.Slope_down = nap_out_slew.Slope_up;
+            if (ref_select == Pots)
+            {
+                nap_out_slew.In = pot_u_coarse * U_MAX + pot_u_fine * U_MAX * 0.05;
+            }
+            else
+            {
+                nap_out_slew.In = ref_gen.out;
+            }
+            SLEW_FLOAT_CALC(nap_out_slew);
 
-			// ponastavim meje
-			nap_out_reg.OutMax = pot_i_coarse * I_MAX + pot_i_fine * I_MAX * 0.05;
-			nap_out_reg.OutMin = -nap_out_reg.OutMax;
+            // ponastavim meje
+            nap_out_reg.OutMax = pot_i_coarse * I_MAX + pot_i_fine * I_MAX * 0.05;
+            nap_out_reg.OutMin = -nap_out_reg.OutMax;
 
-			/* omejitev moci */
-			if (   (power_out > +P_MAX)
-				|| (power_out < -P_MAX))
-			{
-				nap_out_reg.OutMax = P_MAX/nap_out;
-				nap_out_reg.OutMin = -nap_out_reg.OutMax;
-			}
+            /* omejitev moci */
+            if (   (power_out > +P_MAX)
+                || (power_out < -P_MAX))
+            {
+                nap_out_reg.OutMax = P_MAX/nap_out;
+                nap_out_reg.OutMin = -nap_out_reg.OutMax;
+            }
 
-			// napetostni regulator
-			nap_out_reg.Ref = nap_out_slew.Out;
-			nap_out_reg.Fdb = nap_cap;
-			if (tok_out_source == Meas_out)
-			{
-				nap_out_reg.Ff = tok_out;
-			}
-			if (tok_out_source == ABF_out)
-			{
-				nap_out_reg.Ff = tok_out_abf;
-			}
-			if (tok_out_source == KF_out)
-			{
-				nap_out_reg.Ff = 0.0;
-			}
-			if (tok_out_source == None_out)
-			{
-				nap_out_reg.Ff = 0.0;
-			}
-			PID_FLOAT_CALC(nap_out_reg)
+            // napetostni regulator
+            nap_out_reg.Ref = nap_out_slew.Out;
+            nap_out_reg.Fdb = nap_cap;
+            if (tok_out_source == Meas_out)
+            {
+                nap_out_reg.Ff = tok_out;
+            }
+            if (tok_out_source == ABF_out)
+            {
+                nap_out_reg.Ff = tok_out_abf;
+            }
+            if (tok_out_source == KF_out)
+            {
+                nap_out_reg.Ff = 0.0;
+            }
+            if (tok_out_source == None_out)
+            {
+                nap_out_reg.Ff = 0.0;
+            }
+            PID_FLOAT_CALC(nap_out_reg)
 
-			// sedaj pa se tokovna regulatorja
-			#if BB_LEGS == 2
-			tok_bb1_reg.Ref = nap_out_reg.Out * 0.5;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            // sedaj pa se tokovna regulatorja
+            #if BB_LEGS == 2
+            tok_bb1_reg.Ref = nap_out_reg.Out * 0.5;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			tok_bb2_reg.Ref = nap_out_reg.Out * 0.5;
-			tok_bb2_reg.Fdb = tok_bb2;
-			tok_bb2_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb2_reg);
+            tok_bb2_reg.Ref = nap_out_reg.Out * 0.5;
+            tok_bb2_reg.Fdb = tok_bb2;
+            tok_bb2_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb2_reg);
 
-			BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
-			#endif
-			#if BB_LEGS == 1
-			tok_bb1_reg.Ref = nap_out_reg.Out;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
+            #endif
+            #if BB_LEGS == 1
+            tok_bb1_reg.Ref = nap_out_reg.Out;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			BB_update(tok_bb1_reg.Out, 0.0);
-			#endif
-		}
-		else if (state == Ramp_down)
-		{
-			// napetostni regulator je izklopljen
-			// tokovno referenco doloèa rampa
-			SLEW_FLOAT_CALC(tok_bb_slew);
+            BB_update(tok_bb1_reg.Out, 0.0);
+            #endif
+        }
+        // TODO v dolocenih primerih izhodna napetost zelo naraste pri izklopu
+        else if (state == Ramp_down)
+        {
+            // napetostni regulator je izklopljen
+            // tokovno referenco doloèa rampa
+            SLEW_FLOAT_CALC(tok_bb_slew);
 
-			// sedaj pa se tokovna regulatorja
-			#if BB_LEGS == 2
-			tok_bb1_reg.Ref = tok_bb_slew.Out * 0.5;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            // sedaj pa se tokovna regulatorja
+            #if BB_LEGS == 2
+            tok_bb1_reg.Ref = tok_bb_slew.Out * 0.5;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			tok_bb2_reg.Ref = tok_bb_slew.Out * 0.5;
-			tok_bb2_reg.Fdb = tok_bb2;
-			tok_bb2_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb2_reg);
+            tok_bb2_reg.Ref = tok_bb_slew.Out * 0.5;
+            tok_bb2_reg.Fdb = tok_bb2;
+            tok_bb2_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb2_reg);
 
-			BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
-			#endif
-			#if BB_LEGS == 1
-			tok_bb1_reg.Ref = tok_bb_slew.Out;
-			tok_bb1_reg.Fdb = tok_bb1;
-			tok_bb1_reg.Ff = nap_out/nap_dc;
-			PID_FLOAT_CALC(tok_bb1_reg);
+            BB_update(tok_bb1_reg.Out, tok_bb2_reg.Out);
+            #endif
+            #if BB_LEGS == 1
+            tok_bb1_reg.Ref = tok_bb_slew.Out;
+            tok_bb1_reg.Fdb = tok_bb1;
+            tok_bb1_reg.Ff = nap_out/nap_dc;
+            PID_FLOAT_CALC(tok_bb1_reg);
 
-			BB_update(tok_bb1_reg.Out, 0.0);
+            BB_update(tok_bb1_reg.Out, 0.0);
 
-			#endif
+            #endif
 
-		}
-		// sicer pa nicim integralna stanja
-		else
-		{
+        }
+        // sicer pa nicim integralna stanja
+        else
+        {
 
-		}
-	}
-	else // mode = Open_loop
-	{
-		nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
-		nap_out_slew.Slope_down = nap_out_slew.Slope_up;
-		nap_out_slew.In = pot_u_coarse + pot_u_fine * 0.05;
-		SLEW_FLOAT_CALC(nap_out_slew);
-		BB_update(nap_out_slew.Out, nap_out_slew.Out);
-		tok_bb_slew.Out = 0;
-	}
+        }
+    }
+    else // mode = Open_loop
+    {
+        nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
+        nap_out_slew.Slope_down = nap_out_slew.Slope_up;
+        nap_out_slew.In = pot_u_coarse + pot_u_fine * 0.05;
+        SLEW_FLOAT_CALC(nap_out_slew);
+        BB_update(nap_out_slew.Out, nap_out_slew.Out);
+        tok_bb_slew.Out = 0;
+    }
 }
 
 /**************************************************************
@@ -566,9 +578,9 @@ void PER_int_setup(void)
     nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
 
     // inicializiram regulator omreznega toka
-    tok_grid_reg.Kp = 0.2; 			//0.2;
-    tok_grid_reg.Ki = 0.008; 		//0.008;
-    tok_grid_reg.Kff = 1.2; 		//0.8;
+    tok_grid_reg.Kp = 0.2;          //0.2;
+    tok_grid_reg.Ki = 0.008;        //0.008;
+    tok_grid_reg.Kff = 1.2;         //0.8;
     tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
     tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
 
@@ -666,7 +678,7 @@ void get_electrical(void)
     // poberem vrednosti iz AD pretvornika
     // kalibracija preostalega toka
     if (   (start_calibration == TRUE)
-    	&& (calibration_done == FALSE))
+        && (calibration_done == FALSE))
     {
         // akumuliram offset
         tok_grid_offset_calib = tok_grid_offset_calib + TOK_GRID;
@@ -734,7 +746,7 @@ void get_electrical(void)
     // dodam histerezo
     if (fabs(pot_i_coarse_old - pot_i_coarse) < 2)
     {
-    	pot_i_coarse = pot_i_coarse_old;
+        pot_i_coarse = pot_i_coarse_old;
     }
     // si zapomnim za naslednjiè
     pot_i_coarse_old = 2*(long)(pot_i_coarse / 2);
@@ -763,7 +775,7 @@ void get_electrical(void)
     // dodam histerezo
     if (fabs(pot_i_fine_old - pot_i_fine) < 2)
     {
-    	pot_i_fine = pot_i_fine_old;
+        pot_i_fine = pot_i_fine_old;
     }
     // si zapomnim za naslednjiè
     pot_i_fine_old = 2*(long)(pot_i_fine / 2);
@@ -792,7 +804,7 @@ void get_electrical(void)
     // dodam histerezo
     if (fabs(pot_u_coarse_old - pot_u_coarse) < 2)
     {
-    	pot_u_coarse = pot_u_coarse_old;
+        pot_u_coarse = pot_u_coarse_old;
     }
     // si zapomnim za naslednjiè
     pot_u_coarse_old = 2*(long)(pot_u_coarse / 2);
@@ -821,7 +833,7 @@ void get_electrical(void)
     // dodam histerezo
     if (fabs(pot_u_fine_old - pot_u_fine) < 2)
     {
-    	pot_u_fine = pot_u_fine_old;
+        pot_u_fine = pot_u_fine_old;
     }
     // si zapomnim za naslednjiè
     pot_u_fine_old = 2*(long)(pot_u_fine / 2);
@@ -876,104 +888,104 @@ void get_electrical(void)
 #pragma CODE_SECTION(check_limits, "ramfuncs");
 void check_limits(void)
 {
-	// samo èe je kalibracija konènana
-	if (calibration_done == TRUE)
-	{
-		if (nap_grid_rms > NAP_GRID_RMS_MAX)
-		{
-			fault_flags.overvoltage_grid = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+    // samo èe je kalibracija konènana
+    if (calibration_done == TRUE)
+    {
+        if (nap_grid_rms > NAP_GRID_RMS_MAX)
+        {
+            fault_flags.overvoltage_grid = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if (   (nap_grid_rms < NAP_GRID_RMS_MIN)
-				&& (state != Initialization)
-				&& (state != Startup))
-		{
-			fault_flags.undervoltage_grid = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if (   (nap_grid_rms < NAP_GRID_RMS_MIN)
+                && (state != Initialization)
+                && (state != Startup))
+        {
+            fault_flags.undervoltage_grid = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if (nap_dc > U_DC_MAX)
-		{
-			fault_flags.overvoltage_dc = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if (nap_dc > U_DC_MAX)
+        {
+            fault_flags.overvoltage_dc = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if (   (nap_dc < U_DC_MIN)
-				&& (state != Initialization)
-				&& (state != Startup))
-		{
-			fault_flags.undervoltage_dc = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if (   (nap_dc < U_DC_MIN)
+                && (state != Initialization)
+                && (state != Startup))
+        {
+            fault_flags.undervoltage_dc = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if ((tok_grid > +CURRENT_GRID_LIM) || (tok_grid < -CURRENT_GRID_LIM))
-		{
-			fault_flags.overcurrent_grid = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if ((tok_grid > +CURRENT_GRID_LIM) || (tok_grid < -CURRENT_GRID_LIM))
+        {
+            fault_flags.overcurrent_grid = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if ((tok_bb1 > +CURRENT_BB_LIM) || (tok_bb1 < -CURRENT_BB_LIM))
-		{
-			fault_flags.overcurrent_bb = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if ((tok_bb1 > +CURRENT_BB_LIM) || (tok_bb1 < -CURRENT_BB_LIM))
+        {
+            fault_flags.overcurrent_bb = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-		if ((tok_bb2 > +CURRENT_BB_LIM) || (tok_bb2 < -CURRENT_BB_LIM))
-		{
-			fault_flags.overcurrent_bb = TRUE;
-			state = Fault_sensed;
-			// izklopim mostic
-			FB_disable();
-			BB_disable();
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+        if ((tok_bb2 > +CURRENT_BB_LIM) || (tok_bb2 < -CURRENT_BB_LIM))
+        {
+            fault_flags.overcurrent_bb = TRUE;
+            state = Fault_sensed;
+            // izklopim mostic
+            FB_disable();
+            BB_disable();
 
-			// izklopim vse kontaktorjev
-			PCB_in_relay_off();
-			PCB_res_relay_off();
-			PCB_out_relay_off();
-		}
-	}
+            // izklopim vse kontaktorjev
+            PCB_in_relay_off();
+            PCB_res_relay_off();
+            PCB_out_relay_off();
+        }
+    }
 }
 
