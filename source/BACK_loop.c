@@ -204,9 +204,15 @@ void work_fcn(void)
     if ((en_tipka == TRUE))
     {
         // postavim generator rampe v izhodišèe
-        // TODO v dolocenih primerih tole dela narobe
         DINT;
-        tok_bb_slew.Out = tok_bb1 + tok_bb2;
+        if ((tok_bb1 + tok_bb2) < 1.0)
+        {
+            tok_bb_slew = 0.0;
+        }
+        else
+        {
+            tok_bb_slew.Out = tok_bb1 + tok_bb2;
+        }
         state = Ramp_down;
         EINT;
     }
