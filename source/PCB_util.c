@@ -21,7 +21,7 @@ static unsigned int  counter = 0;
 
 /**************************************************************
 * Funckija ki brcne zunanji WatchDog se lahko
-* kliče samo iz periodicne prekinitve
+* klice samo iz periodicne prekinitve
 **************************************************************/
 #pragma CODE_SECTION(PCB_kick_dog_int, "ramfuncs");
 void PCB_kick_dog_int(void)
@@ -38,7 +38,7 @@ void PCB_kick_dog_int(void)
 
     // povecamo stevec prekinitev
     counter = counter + 1;
-    if (counter > (SAMP_FREQ / PCB_DOG_FREQ) ) //tukaj sem spremenil iz SAMPLE_FREQ v SWITCH_FREQ
+    if (counter > (SAMP_FREQ / PCB_DOG_FREQ) ) // tukaj sem spremenil iz SAMPLE_FREQ v SWITCH_FREQ
     {
         counter = 0;
     }
@@ -133,7 +133,7 @@ void PCB_mode_LED_on(void)
 }
 
 /**************************************************************
-* Funckija, ki izklopi LED indikacijo tokovnega režima(delamo v napetostnem režimu)
+* Funckija, ki izklopi LED indikacijo tokovnega rezima (delamo v napetostnem rezimu)
 **************************************************************/
 void PCB_mode_LED_off(void)
 {
@@ -144,7 +144,7 @@ void PCB_mode_LED_off(void)
 * Funckija ki resetira zapah na prilagodilni tiskanini
 *
 * !!!!!!!!!!!!!!!!!!!!!
-* je ne smeš klicati iz prekinitve
+* je ne smes klicati iz prekinitve
 * !!!!!!!!!!!!!!!!!!!!
 *
 **************************************************************/
@@ -227,7 +227,7 @@ bool PCB_reset_SW(void)
 }
 
 /**************************************************************
-* Funckija ki vrne stanje strojne za��ite
+* Funckija ki vrne stanje strojne zascite
 **************************************************************/
 bool PCB_HW_trip(void)
 {

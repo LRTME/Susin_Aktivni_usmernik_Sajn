@@ -45,6 +45,11 @@ float   damping_dc = 0.707;
 extern  ABF_float   i_cap_abf;
 extern  ABF_float   i_cap_dc;
 
+// zaèasne spremenljivke za teste
+float temp1 = 0.0;
+float temp2 = 0.0;
+float temp3 = 0.0;
+
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem
 **************************************************************/
@@ -109,6 +114,10 @@ void fault_fcn(void)
     {
         // resetiram MCU - preko WD-ja
         EALLOW;
+        /* RESETIRANJE PROCESORJA S POMOÈJO V PROCESOR VGRAJENEGA PSA ÈUVAJA */
+        // najprej omogoèim psa èuvaja, ker do sedaj še ni bil in vedno, ko pišem po tem registru zapišem še 1,0,1 na bite z zap. št. 5,4,3
+        WdRegs.WDCR.all = 0x0028;
+        // potem onemogoèim psa èuvaja in namenoma ne napišem kombinacije 1,0,1 na bite z zap. št. 5,4,3 - to sproži reset procesorja
         WdRegs.WDCR.all = 0x0040;
         EDIS;
     }
@@ -207,7 +216,7 @@ void work_fcn(void)
         DINT;
         if ((tok_bb1 + tok_bb2) < 1.0)
         {
-            tok_bb_slew = 0.0;
+            tok_bb_slew.Out = 0.0;
         }
         else
         {
@@ -228,7 +237,7 @@ void work_fcn(void)
     }
     else
     {
-        PCB_mode_LED_off();
+    	PCB_mode_LED_off();
     }
 }
 

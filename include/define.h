@@ -65,7 +65,7 @@
 #define     U_DC_MIN            0
 
 // deklaracije za logicne operacije
-//typedef enum {FALSE = 0, TRUE} bool;
+// typedef enum {FALSE = 0, TRUE} bool;
 #define     TRUE            true
 #define     FALSE           false
 

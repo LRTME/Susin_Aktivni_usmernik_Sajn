@@ -29,7 +29,7 @@ labela:
     // inicializiram SD kartico
     SD_init();
 
-    // inicializacija komunikacijoe
+    // inicializacija komunikacije
     COMM_initialization();
 
     // inicializiram ADC
@@ -130,7 +130,7 @@ labela:
     FAN_update(0.25);
     FB_enable();
     state = Standby;
-    // zeljeno vrednost enaccim z trenutno, da se lepo zapeljem po rampi
+    // zeljeno vrednost enacim s trenutno, da se lepo zapeljem po rampi
     nap_dc_slew.Out = nap_dc;
     EINT;
     // pocakam da se napetost enosmernega kroga zapelje na nastavljeno vrednost

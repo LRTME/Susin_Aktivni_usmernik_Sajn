@@ -1,6 +1,6 @@
 /****************************************************************
 * FILENAME:     REF_gen.c
-* DESCRIPTION:  generator tazliènih oblik signala
+* DESCRIPTION:  generator razliènih oblik signala
 * AUTHOR:       Mitja Nemec
 * START DATE:   1.8.2016
 ****************************************************************/

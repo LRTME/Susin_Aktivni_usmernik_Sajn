@@ -169,7 +169,7 @@ void interrupt PER_int(void)
     // izracunam obremenjenost procesorja
     cpu_load = (float)interrupt_cycles / (CPU_FREQ/SWITCH_FREQ);
 
-    //brcnemo psa
+    // brcnemo psa
     PCB_kick_dog_int();
 
     // stevec prekinitev, ki se resetira vsako sekundo
@@ -183,7 +183,7 @@ void interrupt PER_int(void)
     sd_card_cnt = sd_card_cnt + 1;
     if (sd_card_cnt >= SAMP_FREQ/100)
     {
-        SD_tick_timer();;
+        SD_tick_timer();
         sd_card_cnt = 0;
     }
 
@@ -899,7 +899,7 @@ void check_limits(void)
             FB_disable();
             BB_disable();
 
-            // izklopim vse kontaktorjev
+            // izklopim vse kontaktorje
             PCB_in_relay_off();
             PCB_res_relay_off();
             PCB_out_relay_off();
@@ -955,7 +955,7 @@ void check_limits(void)
             FB_disable();
             BB_disable();
 
-            // izklopim vse kontaktorjev
+            // izklopim vse kontaktorje
             PCB_in_relay_off();
             PCB_res_relay_off();
             PCB_out_relay_off();
