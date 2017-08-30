@@ -104,6 +104,29 @@ void BACK_loop(void)
             break;
         }
 
+
+
+
+        // pobrišem napako, in grem v standby
+            if (reset_tipka == TRUE)
+            {
+                // resetiram MCU - preko WD-ja
+                EALLOW;
+                /* RESETIRANJE PROCESORJA S POMOÈJO V PROCESOR VGRAJENEGA PSA ÈUVAJA */
+                // najprej omogoèim psa èuvaja, ker do sedaj še ni bil in vedno, ko pišem po tem registru zapišem še 1,0,1 na bite z zap. št. 5,4,3
+                WdRegs.WDCR.all = 0x0028;
+                // potem onemogoèim psa èuvaja in namenoma ne napišem kombinacije 1,0,1 na bite z zap. št. 5,4,3 - to sproži reset procesorja
+                WdRegs.WDCR.all = 0x0040;
+                EDIS;
+            }
+
+
+
+
+
+
+
+
     }   // end of while(1)
 }       // end of BACK_loop
 

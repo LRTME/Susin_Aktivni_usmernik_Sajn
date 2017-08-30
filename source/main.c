@@ -130,6 +130,9 @@ labela:
     FAN_update(0.25);
     FB_enable();
     state = Standby;
+
+    DisableDog();
+
     // zeljeno vrednost enacim s trenutno, da se lepo zapeljem po rampi
     nap_dc_slew.Out = nap_dc;
     EINT;
