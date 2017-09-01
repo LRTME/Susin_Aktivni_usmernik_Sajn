@@ -1,6 +1,6 @@
 /************************************************************** 
 * FILE:         FB_phase_shift.h
-* DESCRIPTION:  header file for full bridg driver
+* DESCRIPTION:  header file for full bridge driver
 * AUTHOR:       Mitja Nemec
 * START DATE:   18.8.2010
 * VERSION:      1.0

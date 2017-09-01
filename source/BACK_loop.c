@@ -45,11 +45,6 @@ float   damping_dc = 0.707;
 extern  ABF_float   i_cap_abf;
 extern  ABF_float   i_cap_dc;
 
-// zaèasne spremenljivke za teste
-float temp1 = 0.0;
-float temp2 = 0.0;
-float temp3 = 0.0;
-
 /**************************************************************
 * Funkcija, ki se izvaja v ozadju med obratovanjem
 **************************************************************/

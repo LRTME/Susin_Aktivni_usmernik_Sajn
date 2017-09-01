@@ -86,7 +86,7 @@ void REF_gen(void)
 
     case Konst:
         // generiram signal
-        ref_gen.out = ref_gen.amp;
+        ref_gen.out = ref_gen.amp + ref_gen.offset;
         break;
 
     case Sine:

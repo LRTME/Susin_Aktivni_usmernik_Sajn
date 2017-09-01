@@ -63,6 +63,7 @@ SLEW_float  nap_dc_slew = SLEW_FLOAT_DEFAULTS;
 
 // regulacija omreznega toka
 PID_float   tok_grid_reg = PID_FLOAT_DEFAULTS;
+RES_REG_float tok_grid_res_reg = RES_REG_FLOAT_DEFAULTS;
 
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
@@ -75,7 +76,7 @@ SLEW_float  tok_bb_slew = SLEW_FLOAT_DEFAULTS;
 
 // sinhronizacija na omrežje
 float       sync_base_freq = SWITCH_FREQ;
-PID_float   sync_reg    = PID_FLOAT_DEFAULTS;
+PID_float   sync_reg = PID_FLOAT_DEFAULTS;
 float       sync_switch_freq = SWITCH_FREQ;
 float       sync_grid_freq = ((SWITCH_FREQ/SAMPLING_RATIO)/SAMPLE_POINTS);
 bool        sync_use = TRUE;
@@ -126,6 +127,8 @@ float   pot_i_fine_old = 0.0;
 // za oceno obremenjenosti CPU-ja
 float   cpu_load  = 0.0;
 long    interrupt_cycles = 0;
+long 	num_of_s_passed = 0;
+long 	num_of_min_passed = 0;
 
 long    sd_card_cnt = 0;
 
@@ -140,6 +143,12 @@ volatile enum    {Pots = 0, Ref_generator} ref_select = Pots;
 
 // spremenljikva s katero štejemo kolikokrat se je prekinitev predolgo izvajala
 int     interrupt_overflow_counter = 0;
+
+// zaèasne spremenljivke
+float 	temp1 = 0.0;
+
+// kot, ki se spreminja z 1 Hz
+float 	ref_kot = 0.0;
 
 void check_limits(void);
 void get_electrical(void);
@@ -174,9 +183,34 @@ void interrupt PER_int(void)
 
     // stevec prekinitev, ki se resetira vsako sekundo
     interrupt_cnt = interrupt_cnt + 1;
-    if (interrupt_cnt > SWITCH_FREQ)
+    if (interrupt_cnt > SAMP_FREQ)
     {
         interrupt_cnt = 0;
+        num_of_s_passed = num_of_s_passed + 1;
+    }
+
+    // dodam štetje sekund
+    if (num_of_s_passed > 60)
+    {
+    	num_of_s_passed = 0;
+    	num_of_min_passed = num_of_min_passed + 1;
+    }
+
+    // dodam štetje minut
+    if (num_of_min_passed > 60)
+    {
+    	num_of_min_passed = 0;
+    }
+
+    // dodam svoj kot, ki se spreminja v obmoèju od [0,1) s frekvenco 1 Hz
+    ref_kot = ref_kot + 1 * 1/ ((float) SAMP_FREQ);
+    if (ref_kot > 1.0)
+    {
+    	ref_kot = ref_kot - 1.0;
+    }
+    if (ref_kot < 0.0)
+    {
+    	ref_kot = ref_kot + 1.0;
     }
 
     // vsakih 10ms poklicem SD_card timer handler
@@ -316,7 +350,7 @@ void input_bridge_control(void)
         
         PID_FLOAT_CALC(nap_dc_reg);
 
-        // izvedem tokovni regulator
+        // izvedem tokovni PI regulator
         // tega bi veljalo zamenjati za PR regulator
         // ampak samo v primeru ko se sinhroniziram na omrežje
         tok_grid_reg.Ref = -nap_dc_reg.Out * nap_grid_form;
@@ -324,8 +358,48 @@ void input_bridge_control(void)
         tok_grid_reg.Ff = nap_grid/nap_dc;
         PID_FLOAT_CALC(tok_grid_reg);
 
+        // dodam še resonanèni regulator
+//        tok_grid_res_reg.Ref = sin(2 * PI * 50.0 * ref_kot);
+        /*
+        if (num_of_s_passed > 10)
+        {
+            tok_grid_res_reg.Fdb = 0.99 * sin(2 * PI * 50.0 * ref_kot);
+        }
+        else
+        {
+        	tok_grid_res_reg.Fdb = sin(2 * PI * 50.0 * ref_kot);
+        }
+
+        if (num_of_s_passed > 30)
+        {
+            tok_grid_res_reg.Fdb = sin(2 * PI * 50.0 * ref_kot);
+        }
+*/
+        tok_grid_res_reg.Fdb = 0.99 * sin(2 * PI * 50.0 * ref_kot);
+        tok_grid_res_reg.Ref = 1.00 * sin(2 * PI * 50.0 * ref_kot);
+//        tok_grid_res_reg.Ref = tok_grid_reg.Ref;
+//        tok_grid_res_reg.Fdb = tok_grid_reg.Fdb;
+        tok_grid_res_reg.Ff = 0;
+        // izraèunam kot, ki je integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+        tok_grid_res_reg.Kot =  tok_grid_res_reg.Kot + 50.0 * 1/SWITCH_FREQ;
+        if (tok_grid_res_reg.Kot > 1.0)
+        {
+        	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot - 1.0;
+        }
+        if (tok_grid_res_reg.Kot < 0.0)
+        {
+        	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot + 1.0;
+        }
+        RES_REG_CALC(tok_grid_res_reg);
+
+
         // posljem vse skupaj na mostic
         FB_update(tok_grid_reg.Out);
+//        FB_update(tok_grid_reg.Out + tok_grid_res_reg.Out);
+
+
+
+
     }
     // sicer pa nicim integralna stanja
     else
@@ -523,145 +597,6 @@ void output_bb_control(void)
         BB_update(nap_out_slew.Out, nap_out_slew.Out);
         tok_bb_slew.Out = 0;
     }
-}
-
-/**************************************************************
- * Funckija, ki pripravi vse potrebno za izvajanje
- * prekinitvene rutine
- **************************************************************/
-void PER_int_setup(void)
-{
-    // inicializiram data logger
-    dlog.mode = Single;
-    dlog.auto_time = 1;
-    dlog.holdoff_time = 1;
-
-    dlog.prescalar = 10;
-
-    dlog.slope = Positive;
-    dlog.trig = &ref_gen.kot;
-    dlog.trig_value = 0.98;
-
-    dlog.iptr1 = &nap_grid;
-    dlog.iptr2 = &tok_grid;
-    dlog.iptr3 = &nap_dc;
-    dlog.iptr4 = &i_cap_dc.i_cap_estimated;
-    dlog.iptr5 = &tok_dc_abf;
-    dlog.iptr6 = &nap_out;
-    dlog.iptr7 = &tok_out;
-    dlog.iptr8 = &tok_out_abf;
-
-    // inicializitam generator referenènega signala
-    ref_gen.amp = 2;
-    ref_gen.offset = U_DC_REF;
-    ref_gen.type = Step;
-    ref_gen.duty = 0.1;
-    ref_gen.frequency = 0.2;
-    ref_gen.sampling_period = SAMPLE_TIME;
-
-    // inicializiram DC filter
-    DC_FLOAT_MACRO_INIT(napetost_dc_f);
-
-    // inicilaliziram DFT
-    DFT_FLOAT_MACRO_INIT(nap_grid_dft);
-
-    // inicializiram nap_dc_slew
-    nap_dc_slew.In = U_DC_REF;
-    nap_dc_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
-    nap_dc_slew.Slope_down = nap_dc_slew.Slope_up;
-
-    // inicializiram regulator DC_link napetosti
-    nap_dc_reg.Kp = 2.0; //4.0;
-    nap_dc_reg.Ki = 0.0001; //0.0002;
-    nap_dc_reg.Kff = 0.9;
-    nap_dc_reg.OutMax = +20; //+15; //+10.0; // +33.0
-    nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
-
-    // inicializiram regulator omreznega toka
-    tok_grid_reg.Kp = 0.2;          //0.2;
-    tok_grid_reg.Ki = 0.008;        //0.008;
-    tok_grid_reg.Kff = 1.2;         //0.8;
-    tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
-    tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
-
-    // inicializiram rampo izhodne napetosti
-    nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer
-    nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
-    nap_out_slew.Slope_down = nap_out_slew.Slope_up;
-
-    // inicializiram regulator izhodne napetosti
-    nap_out_reg.Kp = 10.0;
-    nap_out_reg.Ki = 0.1; // 0.1
-    nap_out_reg.Kff = 0.8;
-    nap_out_reg.OutMax = +0.0;   // kasneje to doloèa potenciometer
-    nap_out_reg.OutMin = -0.0;   // kasneje to doloèa potenciometer
-
-    // inicializiram ramp bb toka
-    tok_bb_slew.In = 0;
-    tok_bb_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 A/s
-    tok_bb_slew.Slope_down = tok_bb_slew.Slope_up;
-
-    // inicializiram tokovna regulatorja
-    tok_bb1_reg.Kp = 0.1;
-    tok_bb1_reg.Ki = 0.001;
-    tok_bb1_reg.Kff = 0.8;
-    tok_bb1_reg.OutMax = +0.99; // zaradi bootstrap driverjev ne gre do 1.0
-    tok_bb1_reg.OutMin = -0.99; // zaradi bootstrap driverjev ne gre do 1.0
-
-    tok_bb2_reg.Kp = tok_bb1_reg.Kp;
-    tok_bb2_reg.Ki = tok_bb1_reg.Ki;
-    tok_bb2_reg.Kff = tok_bb1_reg.Kff;
-    tok_bb2_reg.OutMax = tok_bb1_reg.OutMax;
-    tok_bb2_reg.OutMin = tok_bb1_reg.OutMin;
-
-    // regultaro frekvence
-    sync_reg.Kp = 1000;
-    sync_reg.Ki = 0.01;
-    sync_reg.OutMax = +SWITCH_FREQ/10;
-    sync_reg.OutMin = -SWITCH_FREQ/10;
-
-    // inicializiram statistiko
-    STAT_FLOAT_MACRO_INIT(statistika);
-
-    // inicializiram ABF
-                                    // 2000 Hz;     1000 Hz;     500 Hz,      100 Hz          50 Hz           10 Hz
-    i_cap_abf.Alpha = 0.394940272;  // 0.6911845;   0.394940272 ; 0.209807141; 0.043935349;    0.022091045;    0.004437948
-    i_cap_abf.Beta = 0.098696044;   // 0.394784176; 0.098696044; 0.024674011; 0.00098696;     0.00024674;     0.0000098696
-    i_cap_abf.Capacitance = 5 * 0.0022;   // 2200 uF
-
-    i_cap_dc.Alpha = 0.394940272;  // 0.6911845;   0.394940272 ; 0.209807141; 0.043935349;    0.022091045;    0.004437948
-    i_cap_dc.Beta = 0.098696044;   // 0.394784176; 0.098696044; 0.024674011; 0.00098696;     0.00024674;     0.0000098696
-    i_cap_dc.Capacitance = 5 * 0.0022;   // 2200 uF
-
-    // inicializiram delay_linijo
-    DELAY_FLOAT_INIT(i_grid_delay)
-    i_grid_delay.delay = 10;
-
-    // inicializiram filter za oceno toka
-    DC_FLOAT_MACRO_INIT(i_dc_f);
-
-    // inicializiram filter za meritev toka
-    DC_FLOAT_MACRO_INIT(tok_out_f);
-
-    // inicializiram štoparico
-    TIC_init();
-
-    // Proženje prekinitve
-    EPwm1Regs.ETSEL.bit.INTSEL = ET_CTR_ZERO;   //sproži prekinitev pri prehodu TBCOUNTER skozi 0
-    EPwm1Regs.ETPS.bit.INTPRD = SAMPLING_RATIO;         //ob vsakem prvem dogodku
-    EPwm1Regs.ETCLR.bit.INT = 1;                //clear possible flag
-    EPwm1Regs.ETSEL.bit.INTEN = 1;              //enable interrupt
-
-    // registriram prekinitveno rutino
-    EALLOW;
-    PieVectTable.EPWM1_INT = &PER_int;
-    EDIS;
-    PieCtrlRegs.PIEACK.all = PIEACK_GROUP3;
-    PieCtrlRegs.PIEIER3.bit.INTx1 = 1;
-    IER |= M_INT3;
-    // da mi prekinitev teèe  tudi v real time naèinu
-    // (za razhoršèevanje main zanke in BACK_loop zanke)
-    SetDBGIER(M_INT3);
 }
 
 #pragma CODE_SECTION(get_electrical, "ramfuncs");
@@ -989,3 +924,147 @@ void check_limits(void)
     }
 }
 
+/**************************************************************
+ * Funckija, ki pripravi vse potrebno za izvajanje
+ * prekinitvene rutine
+ **************************************************************/
+void PER_int_setup(void)
+{
+    // inicializiram data logger
+    dlog.mode = Normal;
+    dlog.auto_time = 1;
+    dlog.holdoff_time = 1;
+
+    dlog.prescalar = 20;
+
+    dlog.slope = Positive;
+    dlog.trig = &ref_kot;
+    dlog.trig_value = 0.98;
+
+    dlog.iptr1 = &nap_grid;
+    dlog.iptr2 = &tok_grid;
+    dlog.iptr3 = &nap_dc_reg.Fdb;
+    dlog.iptr4 = &tok_dc_abf;
+    dlog.iptr5 = &tok_dc_abf;
+    dlog.iptr6 = &nap_out_reg.Fdb;
+    dlog.iptr7 = &tok_out;
+    dlog.iptr8 = &ref_kot;
+
+    // inicializitam generator referenènega signala
+    ref_gen.amp = 2;
+    ref_gen.offset = U_DC_REF;
+    ref_gen.type = Step;
+    ref_gen.duty = 0.1;
+    ref_gen.frequency = 0.2;
+    ref_gen.sampling_period = SAMPLE_TIME;
+
+    // inicializiram DC filter
+    DC_FLOAT_MACRO_INIT(napetost_dc_f);
+
+    // inicilaliziram DFT
+    DFT_FLOAT_MACRO_INIT(nap_grid_dft);
+
+    // inicializiram nap_dc_slew
+    nap_dc_slew.In = U_DC_REF;
+    nap_dc_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
+    nap_dc_slew.Slope_down = nap_dc_slew.Slope_up;
+
+    // inicializiram regulator DC_link napetosti
+    nap_dc_reg.Kp = 2.0; //4.0;
+    nap_dc_reg.Ki = 0.0001; //0.0002;
+    nap_dc_reg.Kff = 0.9;
+    nap_dc_reg.OutMax = +20; //+15; //+10.0; // +33.0
+    nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
+
+    // inicializiram PI regulator omreznega toka
+    tok_grid_reg.Kp = 0.2;          //0.2;
+    tok_grid_reg.Ki = 0.008;        //0.008;
+    tok_grid_reg.Kff = 1.2;         //0.8;
+    tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
+    tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
+
+    // inicializiram resonanèni regulator omreznega toka
+    tok_grid_res_reg.Kres = 1.0/10.0;  	//0.008;
+    tok_grid_res_reg.Kff = 0;       //0;
+    tok_grid_res_reg.OutMax = +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg.OutMin = -0.5; // zaradi varnosti ne gre do 0.99
+
+    // inicializiram rampo izhodne napetosti
+    nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer
+    nap_out_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
+    nap_out_slew.Slope_down = nap_out_slew.Slope_up;
+
+    // inicializiram regulator izhodne napetosti
+    nap_out_reg.Kp = 10.0;
+    nap_out_reg.Ki = 0.1; // 0.1
+    nap_out_reg.Kff = 0.8;
+    nap_out_reg.OutMax = +0.0;   // kasneje to doloèa potenciometer
+    nap_out_reg.OutMin = -0.0;   // kasneje to doloèa potenciometer
+
+    // inicializiram ramp bb toka
+    tok_bb_slew.In = 0;
+    tok_bb_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 A/s
+    tok_bb_slew.Slope_down = tok_bb_slew.Slope_up;
+
+    // inicializiram tokovna regulatorja
+    tok_bb1_reg.Kp = 0.1;
+    tok_bb1_reg.Ki = 0.001;
+    tok_bb1_reg.Kff = 0.8;
+    tok_bb1_reg.OutMax = +0.99; // zaradi bootstrap driverjev ne gre do 1.0
+    tok_bb1_reg.OutMin = -0.99; // zaradi bootstrap driverjev ne gre do 1.0
+
+    tok_bb2_reg.Kp = tok_bb1_reg.Kp;
+    tok_bb2_reg.Ki = tok_bb1_reg.Ki;
+    tok_bb2_reg.Kff = tok_bb1_reg.Kff;
+    tok_bb2_reg.OutMax = tok_bb1_reg.OutMax;
+    tok_bb2_reg.OutMin = tok_bb1_reg.OutMin;
+
+    // regulator frekvence
+    sync_reg.Kp = 1000;
+    sync_reg.Ki = 0.01;
+    sync_reg.OutMax = +SWITCH_FREQ/10;
+    sync_reg.OutMin = -SWITCH_FREQ/10;
+
+    // inicializiram statistiko
+    STAT_FLOAT_MACRO_INIT(statistika);
+
+    // inicializiram ABF
+                                    // 2000 Hz;     1000 Hz;     500 Hz,      100 Hz          50 Hz           10 Hz
+    i_cap_abf.Alpha = 0.394940272;  // 0.6911845;   0.394940272 ; 0.209807141; 0.043935349;    0.022091045;    0.004437948
+    i_cap_abf.Beta = 0.098696044;   // 0.394784176; 0.098696044; 0.024674011; 0.00098696;     0.00024674;     0.0000098696
+    i_cap_abf.Capacitance = 5 * 0.0022;   // 2200 uF
+
+    i_cap_dc.Alpha = 0.394940272;  // 0.6911845;   0.394940272 ; 0.209807141; 0.043935349;    0.022091045;    0.004437948
+    i_cap_dc.Beta = 0.098696044;   // 0.394784176; 0.098696044; 0.024674011; 0.00098696;     0.00024674;     0.0000098696
+    i_cap_dc.Capacitance = 5 * 0.0022;   // 2200 uF
+
+    // inicializiram delay_linijo
+    DELAY_FLOAT_INIT(i_grid_delay)
+    i_grid_delay.delay = 10;
+
+    // inicializiram filter za oceno toka
+    DC_FLOAT_MACRO_INIT(i_dc_f);
+
+    // inicializiram filter za meritev toka
+    DC_FLOAT_MACRO_INIT(tok_out_f);
+
+    // inicializiram štoparico
+    TIC_init();
+
+    // Proženje prekinitve
+    EPwm1Regs.ETSEL.bit.INTSEL = ET_CTR_ZERO;   //sproži prekinitev pri prehodu TBCOUNTER skozi 0
+    EPwm1Regs.ETPS.bit.INTPRD = SAMPLING_RATIO;         //ob vsakem prvem dogodku
+    EPwm1Regs.ETCLR.bit.INT = 1;                //clear possible flag
+    EPwm1Regs.ETSEL.bit.INTEN = 1;              //enable interrupt
+
+    // registriram prekinitveno rutino
+    EALLOW;
+    PieVectTable.EPWM1_INT = &PER_int;
+    EDIS;
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP3;
+    PieCtrlRegs.PIEIER3.bit.INTx1 = 1;
+    IER |= M_INT3;
+    // da mi prekinitev teèe  tudi v real time naèinu
+    // (za razhoršèevanje main zanke in BACK_loop zanke)
+    SetDBGIER(M_INT3);
+}
