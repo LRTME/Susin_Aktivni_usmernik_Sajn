@@ -16,7 +16,7 @@
 /* definicija konstant, ki jih potrebujemo  */
 
 /* velikost našega okna - št vzorcev v periodi */
-#define     STAT_FLOAT_SIZE    1000
+#define     STAT_FLOAT_SIZE    800
 
 typedef struct STAT_FLOAT_STRUCT
 {

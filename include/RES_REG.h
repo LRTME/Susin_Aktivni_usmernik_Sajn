@@ -75,12 +75,12 @@ typedef struct RES_REG_FLOAT_STRUCT
     {                                               \
         v.Kot = 0.0;                           		\
     }                                               \
-    v.Err = v.Ref - v.Fdb;                          \
+    v.Err = v.Ref - v.Fdb;    			            \
 	v.Cos = cos(2 * PI * v.Kot);                    \
 	v.Sin = sin(2 * PI * v.Kot);                    \
 	v.Ucos = v.Ui1 * v.Cos;                    	    \
 	v.Usin = v.Ui2 * v.Sin;                    		\
-	v.Ures = v.Kres * (v.Ucos + v.Usin);			\
+	v.Ures = v.Ucos + v.Usin;						\
 	v.Uff = v.Kff * v.Ff;                           \
     v.Out = v.Ures + v.Uff;         				\
     if (v.Out > v.OutMax)                           \
@@ -93,8 +93,8 @@ typedef struct RES_REG_FLOAT_STRUCT
     }                                               \
     else                                            \
     {                                               \
-		v.Ui1 = v.Ui1 + v.Err * v.Cos;            	\
-		v.Ui2 = v.Ui2 + v.Err * v.Sin;            	\
+		v.Ui1 = v.Ui1 + v.Kres * v.Err * v.Cos;    	\
+		v.Ui2 = v.Ui2 + v.Kres * v.Err * v.Sin;     \
     }                                               \
 } 
 #endif // __RES_REG_H__

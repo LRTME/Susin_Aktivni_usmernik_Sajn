@@ -20,10 +20,10 @@
 
 typedef struct REP_REG_FLOAT_STRUCT
 {
-    int   BufferHistoryLength;    	// Input: Length of buffer
     float SamplingSignal;          	// Input: Signal that increments index [0, 1)
     float Ref;                      // Input: Reference input
     float Fdb;                      // Input: Feedback input
+    int   BufferHistoryLength;    	// Input: Length of buffer
     float ErrSumMax;        		// Parameter: Maximum error
     float ErrSumMin;        		// Parameter: Minimum error
     float Krep;                   	// Parameter: Gain for Err
@@ -50,11 +50,11 @@ typedef struct REP_REG_FLOAT_STRUCT
 
 #define REP_REG_FLOAT_DEFAULTS  \
 {           					\
-    0,      					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
-    0.0,    					\
+    0.0,      					\
+    0,	    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
