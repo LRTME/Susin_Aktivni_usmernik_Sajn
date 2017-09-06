@@ -67,11 +67,13 @@ float		nap_PI_reg_out_filtered = 0.0;
 PID_float   	tok_grid_reg = PID_FLOAT_DEFAULTS;
 RES_REG_float 	tok_grid_res_reg = RES_REG_FLOAT_DEFAULTS;
 REP_REG_float	tok_grid_rep_reg = REP_REG_FLOAT_DEFAULTS;
+DCT_REG_float	tok_grid_dct_reg = DCT_REG_FLOAT_DEFAULTS;
 DFT_float		tok_grid_dft = DFT_FLOAT_DEFAULTS;
 STAT_float		tok_grid_stat = STAT_FLOAT_DEFAULTS;
 float 			tok_grid_1_harm_rms = 0.0;
 float 			tok_grid_rms = 0.0;
 float 			THD_tok_grid = 0.0;
+volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
 
 // regulacija izhodne napetosti
@@ -212,7 +214,7 @@ void interrupt PER_int(void)
     }
 
     // dodam svoj kot, ki se spreminja v obmoèju od [0,1) s frekvenco 1 Hz
-    ref_kot = ref_kot + 1.0 * 1.0/((float) SAMP_FREQ);
+    ref_kot = ref_kot + 50.0 * 1.0/SAMP_FREQ;
     if (ref_kot > 1.0)
     {
     	ref_kot = ref_kot - 1.0;
@@ -404,9 +406,14 @@ void input_bridge_control(void)
         /* RESONANÈNI REGULATOR */
         tok_grid_res_reg.Ref = tok_grid_reg.Ref;
         tok_grid_res_reg.Fdb = tok_grid_reg.Fdb;
+        tok_grid_res_reg.Kot = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
         tok_grid_res_reg.Ff = 0;
+
+/*
         // izraèunam kot, ki je integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-        tok_grid_res_reg.Kot =  tok_grid_res_reg.Kot + sync_grid_freq * 1.0/((float) SAMP_FREQ);
+
+        tok_grid_res_reg.Kot = tok_grid_res_reg.Kot + 50.0 * 1.0/SAMP_FREQ;
+
         if (tok_grid_res_reg.Kot > 1.0)
         {
         	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot - 1.0;
@@ -415,7 +422,21 @@ void input_bridge_control(void)
         {
         	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot + 1.0;
         }
-        RES_REG_CALC(tok_grid_res_reg);
+
+
+        if (num_of_s_passed > 10.0 && num_of_s_passed < 20.0)
+        {
+        	tok_grid_res_reg.Ref = cos(2 * PI * 50.0 * tok_grid_res_reg.Kot);
+        }
+
+        tok_grid_res_reg.Ref = 0.99 * cos(2 * PI * tok_grid_res_reg.Kot);
+        tok_grid_res_reg.Fdb = cos(2 * PI * tok_grid_res_reg.Kot);
+*/
+
+        if (extra_i_grid_reg_type == RES)
+        {
+        	RES_REG_CALC(tok_grid_res_reg);
+        }
         /* RESONANÈNI REGULATOR */
 
 
@@ -425,27 +446,42 @@ void input_bridge_control(void)
         tok_grid_rep_reg.Ref = tok_grid_reg.Ref;
         tok_grid_rep_reg.Fdb = tok_grid_reg.Fdb;
         tok_grid_rep_reg.SamplingSignal = ref_kot;
+        if (extra_i_grid_reg_type == REP)
+        {
+        	REP_REG_CALC(&tok_grid_rep_reg);
+        }
         /* REPETITIVNI REGULATOR */
 
 
 
 
+        /* DCT REGULATOR */
+        tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
+        tok_grid_dct_reg.Fdb = cos(2* PI * ref_kot);
+        tok_grid_dct_reg.SamplingSignal = ref_kot;
+
+        /* DCT REGULATOR */
+
+
+        // posljem vse skupaj na mostic
+//        FB_update(tok_grid_reg.Out);
+        FB_update(tok_grid_reg.Out + tok_grid_res_reg.Out + tok_grid_rep_reg.Out);
+
+
+
+
         // izraèunam osnovni harmonik omrenega toka
-        tok_grid_dft.In = tok_grid_reg.Fdb;
+        tok_grid_dft.In = tok_grid_reg.Ref;
 		DFT_FLOAT_MACRO(tok_grid_dft);
 		tok_grid_1_harm_rms = ZSQRT2 * sqrt(tok_grid_dft.SumA*tok_grid_dft.SumA + tok_grid_dft.SumB*tok_grid_dft.SumB);
 
 		// izraèunam efektivno vrednost omrenega toka
-		tok_grid_stat.In = tok_grid_reg.Fdb;
+		tok_grid_stat.In = tok_grid_reg.Ref;
 		STAT_FLOAT_MACRO(tok_grid_stat);
 		tok_grid_rms = tok_grid_stat.Rms;
 
 		// izraèunam THD omrenega toka
         THD_tok_grid = sqrt(fabs(tok_grid_rms*tok_grid_rms - tok_grid_1_harm_rms*tok_grid_1_harm_rms)) / tok_grid_1_harm_rms;
-
-        // posljem vse skupaj na mostic
-//        FB_update(tok_grid_reg.Out);
-        FB_update(tok_grid_reg.Out + tok_grid_res_reg.Out);
 
 
 
@@ -990,7 +1026,7 @@ void PER_int_setup(void)
     dlog.prescalar = 20;
 
     dlog.slope = Positive;
-    dlog.trig = &tok_grid_res_reg.Kot; // &ref_kot
+    dlog.trig = &ref_kot; // &ref_kot
     dlog.trig_value = 0.01;
 
     dlog.iptr1 = &nap_grid;
@@ -1000,7 +1036,7 @@ void PER_int_setup(void)
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &nap_out_reg.Fdb;
     dlog.iptr7 = &tok_out;
-    dlog.iptr8 = &tok_grid_res_reg.Out; // &ref_kot
+    dlog.iptr8 = &tok_grid_rep_reg.Out; // &ref_kot
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -1029,29 +1065,31 @@ void PER_int_setup(void)
     nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
 
     // inicializiram PI regulator omreznega toka
-    tok_grid_reg.Kp = 0.2;          //0.2;
+    tok_grid_reg.Kp = 0.1;          //0.2;
     tok_grid_reg.Ki = 0.008;        //0.008;
-    tok_grid_reg.Kff = 1.2;         //0.8;
+    tok_grid_reg.Kff = 0.9;         //0.8;
     tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
     tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
 
     // inicializiram resonanèni regulator omreznega toka
-    tok_grid_res_reg.Kres = 1e-6;  	// 0.008;
+    tok_grid_res_reg.Kres = 0.0;  	// 0.008;
     tok_grid_res_reg.Kff = 0;       // 0;
-    tok_grid_res_reg.OutMax = 0.2;	// +0.5; // zaradi varnosti ne gre do 0.99
-    tok_grid_res_reg.OutMin = -0.2; // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg.OutMax = 0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
 
     // inicializiram repetitivni regulator omreznega toka
-    REP_REG_INIT_MACRO(tok_grid_rep_reg)
+    REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_rep_reg.Krep = 0.0;
-    tok_grid_rep_reg.w0 = 0.0;
-    tok_grid_rep_reg.w1 = 0.0;
-    tok_grid_rep_reg.w2 = 0.0;
-    tok_grid_rep_reg.ErrSumMax = 0.0;
-    tok_grid_rep_reg.ErrSumMin = 0.0;
-    tok_grid_rep_reg.OutMax = 0.0;
-    tok_grid_rep_reg.OutMin = 0.0;
+    tok_grid_rep_reg.Krep = 0.0; //0.02
+    tok_grid_rep_reg.w0 = 0.2;
+    tok_grid_rep_reg.w1 = 0.2;
+    tok_grid_rep_reg.w2 = 0.2;
+    tok_grid_rep_reg.ErrSumMax = 0.5;
+    tok_grid_rep_reg.ErrSumMin = -0.5;
+    tok_grid_rep_reg.OutMax = 0.5;
+    tok_grid_rep_reg.OutMin = -0.5;
+
+    // inicializiram DCT regulator omreznega toka
 
     // inicializiram rampo izhodne napetosti
     nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer

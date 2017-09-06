@@ -21,8 +21,8 @@
 
 
 // funkcija
-#pragma CODE_SECTION(REP_REG, "ramfuncs");
-void REP_REG (REP_REG_float *v)
+#pragma CODE_SECTION(REP_REG_CALC, "ramfuncs");
+void REP_REG_CALC (REP_REG_float *v)
 {
     // lokalne spremenljivke
 
@@ -51,9 +51,9 @@ void REP_REG (REP_REG_float *v)
 
 
 
-	
+
 	/* circular buffer */
-	
+
     // èe se indeks spremeni, potem gre algoritem dalje (vsako periodo signala, ne pa vsako vzorèno periodo/interval)
     if ((v->i != v->i_prev) || (v->i == 0 && v->i_prev == 0))
     {
@@ -171,7 +171,7 @@ void REP_REG (REP_REG_float *v)
 
 
 
-		
+
     // omejim izhod
     v->Out = (v->Out > v->OutMax)? v->OutMax: v->Out;
     v->Out = (v->Out < v->OutMin)? v->OutMin: v->Out;
