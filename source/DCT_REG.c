@@ -20,8 +20,8 @@
 
 
 // funkcija
-#pragma CODE_SECTION(DCT_REG, "ramfuncs");
-void DCT_REG (DCT_REG_float *v)
+#pragma CODE_SECTION(DCT_REG_CALC, "ramfuncs");
+void DCT_REG_CALC (DCT_REG_float *v)
 {
     // lokalne spremenljivke
 

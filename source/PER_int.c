@@ -1090,6 +1090,16 @@ void PER_int_setup(void)
     tok_grid_rep_reg.OutMin = -0.5;
 
     // inicializiram DCT regulator omreznega toka
+    DCT_REG_INIT_MACRO(tok_grid_dct_reg);
+    tok_grid_dct_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
+    tok_grid_dct_reg.Kdct = 0.0; //0.02
+    tok_grid_dct_reg.k = 0.2;
+    tok_grid_dct_reg.ErrSumMax = 0.5;
+    tok_grid_dct_reg.ErrSumMin = -0.5;
+    tok_grid_dct_reg.OutMax = 0.5;
+    tok_grid_dct_reg.OutMin = -0.5;
+    DCT_REG_FIR_COEFF_CALC_MACRO(tok_grid_dct_reg);
+
 
     // inicializiram rampo izhodne napetosti
     nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer

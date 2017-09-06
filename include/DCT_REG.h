@@ -58,47 +58,43 @@ typedef struct DCT_REG_FLOAT_STRUCT
     0.0,     					\
     0.0,    					\
     0.0,    					\
-    0.0,  						\
+    0,  						\
+    0.0,    					\
     0,	    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
+    0.0,   						\
     0.0,    					\
-    0,    						\
-    0.0,    					\
-    0.0,    					\
-    0.0,      					\
+    0,	    					\
     0,      					\
     0,      					\
     0,      					\
     0,      					\
-    0,      					\
-    0,      					\
-    0,      					\
-    0.0     					\
+    0.0      					\
 }
 
-#define DCT_REG_INIT_MACRO(v)                          	\
-{                                                       \
+#define DCT_REG_INIT_MACRO(v)                          		\
+{                                                       	\
     for (v.i = 0; v.i < MAX_LENGTH_DCT_REG_BUFFER; v.i++)   \
-    {                                                   \
-    	v.ErrSumHistory[v.i] = 0.0;                   	\
-    	v.FIRCoeff[v.i] = 0.0;                   		\
-    }                                                   \
-    v.i = 0;                                            \
+    {                                                   	\
+    	v.ErrSumHistory[v.i] = 0.0;                   		\
+    	v.FIRCoeff[v.i] = 0.0;                   			\
+    }                                                   	\
+    v.i = 0;                                            	\
 }
 
-#define DCT_REG_FIR_COEFF_CALC_MACRO(v)                	\
-{                                                       \
-    for (v.j = 0; v.j < v.BufferHistoryLength; v.j++)   \
-    {                                                   \
-        v.FIRCoeff[v.j] = cos(2 * PI * 1 * 50.0 * (v.j + v.LagCompensation)/v.BufferHistoryLength);	\
-    }                                                   \
-    v.i = 0;                                            \
+#define DCT_REG_FIR_COEFF_CALC_MACRO(v)                		\
+{                                                       	\
+    for (v.j = 0; v.j < MAX_LENGTH_DCT_REG_BUFFER; v.j++)   \
+    {                                                   	\
+        v.FIRCoeff[v.j] = cos(2 * PI * 1.0 * 50.0 * (v.j + v.k)/v.BufferHistoryLength);	\
+    }                                                   	\
+    v.j = 0;                                            	\
 }
 
-extern void DCT_REG (DCT_REG_float *v);
+extern void DCT_REG_CALC (DCT_REG_float *v);
 
 #endif /* INCLUDE_DCT_REG_H_ */
