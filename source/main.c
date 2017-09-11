@@ -12,11 +12,13 @@
 void main(void)
 {
     // PLL, in ura
+
     InitSysCtrl();
-    
-    // GPIO - najprej
+
 labela:
+    // GPIO - najprej
     InitGpio();
+
     // inicializiram PCB
     PCB_init();
 

@@ -31,7 +31,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
     // program
-
+/*
     // omejitev bufferja
     if (v->BufferHistoryLength > MAX_LENGTH_DCT_REG_BUFFER)
     {
@@ -50,9 +50,9 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
-	
+*/
 	/* circular buffer */
-	
+/*
     // èe se indeks spremeni, potem gre algoritem dalje (vsako periodo signala, ne pa vsako vzorèno periodo/interval)
     if ((v->i != v->i_prev) || (v->i == 0 && v->i_prev == 0))
     {
@@ -91,21 +91,34 @@ void DCT_REG_CALC (DCT_REG_float *v)
 		
 		
 		
-		
+*/
         /* DCT filter - FIR filter */
 		
-		v->ErrSum = v->Kdct * v->Err;
-		for (v->j = 0; v->j < v->BufferHistoryLength; v->j = v->j++)
-		{
-			v->CircularBufferIndex = v->i - v->j; // predvidevam, da indeks i vedno le narašèa
-			if (v->CircularBufferIndex < 0)
+//		v->ErrSum = v->Kdct * v->Err;
+		for (v->j = 0; v->j < 200; v->j++)
 			{
-				v->CircularBufferIndex = v->CircularBufferIndex + v->BufferHistoryLength;
-			}
-			
-			v->ErrSum = v->ErrSum + v->FIRCoeff[v->j] * v->ErrSumHistory[v->CircularBufferIndex];
+/*				v->CircularBufferIndex = v->i - v->j; // predvidevam, da indeks i vedno le narašèa
+				if (v->CircularBufferIndex < 0)
+				{
+					v->CircularBufferIndex = v->CircularBufferIndex + v->BufferHistoryLength;
+				}
+
+				v->ErrSum = v->ErrSum + v->FIRCoeff[v->j] * v->ErrSumHistory[v->CircularBufferIndex];
+*/			}
+/*
+DCT_filter:
+
+
+		if (v->j < 20)
+		{
+			v->j++;
+			goto DCT_filter;
 		}
-		
+
+
+		v->j = 0;
+*/
+/*
         // omejim trenutni error, da ne gre v nasièenje
         v->ErrSum = (v->ErrSum > v->ErrSumMax)? v->ErrSumMax: v->ErrSum;
         v->ErrSum = (v->ErrSum < v->ErrSumMin)? v->ErrSumMin: v->ErrSum;
@@ -139,7 +152,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
     // omejim izhod
     v->Out = (v->Out > v->OutMax)? v->OutMax: v->Out;
     v->Out = (v->Out < v->OutMin)? v->OutMin: v->Out;
-
+*/
 
 
 

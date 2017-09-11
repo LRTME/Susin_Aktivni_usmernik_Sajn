@@ -20,7 +20,7 @@
     #endif
 
 // maximal length of buffer for saving history of accumulated error
-#define     MAX_LENGTH_DCT_REG_BUFFER   400
+#define     MAX_LENGTH_DCT_REG_BUFFER   100
 
 // maximal length of harmonics array
 #define		LENGTH_OF_HARMONICS_ARRAY	10
@@ -90,7 +90,7 @@ typedef struct DCT_REG_FLOAT_STRUCT
 {                                                       	\
     for (v.j = 0; v.j < MAX_LENGTH_DCT_REG_BUFFER; v.j++)   \
     {                                                   	\
-        v.FIRCoeff[v.j] = cos(2 * PI * 1.0 * 50.0 * (v.j + v.k)/v.BufferHistoryLength);	\
+        v.FIRCoeff[v.j] = 2.0/MAX_LENGTH_DCT_REG_BUFFER * cos(2 * PI * 1.0 * (v.j + v.k)/v.BufferHistoryLength);	\
     }                                                   	\
     v.j = 0;                                            	\
 }
