@@ -4,6 +4,7 @@
 * AUTHOR:       Denis Sušin
 * START DATE:   29.8.2017
 * VERSION:      1.0
+* ADD:			FPU lib is used for realization of DCT (FIR) filter
 *
 * CHANGES :
 * VERSION   DATE        WHO             DETAIL
@@ -14,13 +15,16 @@
 #define INCLUDE_DCT_REG_H_
 
 #include    "math.h"
+#include	"FPU.h" // for FIR filter: max 512 samples in period, because of lack of Global Shared RAM
 
     #ifndef PI
     #define PI  3.1415926535897932384626433832795
     #endif
 
-// maximal length of buffer for saving history of accumulated error
-#define     MAX_LENGTH_DCT_REG_BUFFER   100
+
+
+// maximal length of buffer for saving history of accumulated error and number of coefficients for DCT (FIR) filter
+#define     LENGTH_DCT_REG_BUFFER   256
 
 // maximal length of harmonics array
 #define		LENGTH_OF_HARMONICS_ARRAY	10
@@ -31,10 +35,10 @@ typedef struct DCT_REG_FLOAT_STRUCT
     float SamplingSignal;          	// Input: Signal that increments index [0, 1); CAUTION: SAMPLING SIGNAL MUST INCREMENT ONLY (UNTIL OVERFLOW)!
     float Ref;                      // Input: Reference input
     float Fdb;                      // Input: Feedback input
-    int   BufferHistoryLength;    	// Parameter: Length of buffer
+    int   BufferHistoryLength;    	// Parameter: Length of buffer, which must be the same as LENGTH_DCT_REG_BUFFER, otherwise FIR filter won't work
     float Kdct;                   	// Parameter: Gain for Err
 	int	  Harmonics[LENGTH_OF_HARMONICS_ARRAY];	// Parameter: Harmonics that will pass through DCT filter
-	float FIRCoeff[MAX_LENGTH_DCT_REG_BUFFER];	// Parameter: FIR filter coefficients (so called DCT filter)
+	float FIRCoeff[LENGTH_DCT_REG_BUFFER];	// Parameter: FIR filter coefficients (so called DCT filter)
     int   k;                        // Parameter: Number of samples for compensation of delay
     float ErrSumMax;        		// Parameter: Maximum error
     float ErrSumMin;        		// Parameter: Minimum errorfloat OutMax;
@@ -49,7 +53,7 @@ typedef struct DCT_REG_FLOAT_STRUCT
 	int   j;                        // Variable: Index j in FIR filter coefficient and in for loop when performing convolution
 	int   CircularBufferIndex;		// Variable: Index of circular buffer
     float Out;                      // Output: DCT_REG output
-    float ErrSumHistory[MAX_LENGTH_DCT_REG_BUFFER];	// History: Buffer of errors from previous period
+    float ErrSumHistory[LENGTH_DCT_REG_BUFFER];	// History: Buffer of errors from previous period
 } DCT_REG_float;
 
 
@@ -78,7 +82,7 @@ typedef struct DCT_REG_FLOAT_STRUCT
 
 #define DCT_REG_INIT_MACRO(v)                          		\
 {                                                       	\
-    for (v.i = 0; v.i < MAX_LENGTH_DCT_REG_BUFFER; v.i++)   \
+    for (v.i = 0; v.i < LENGTH_DCT_REG_BUFFER; v.i++)   \
     {                                                   	\
     	v.ErrSumHistory[v.i] = 0.0;                   		\
     	v.FIRCoeff[v.i] = 0.0;                   			\
@@ -88,9 +92,9 @@ typedef struct DCT_REG_FLOAT_STRUCT
 
 #define DCT_REG_FIR_COEFF_CALC_MACRO(v)                		\
 {                                                       	\
-    for (v.j = 0; v.j < MAX_LENGTH_DCT_REG_BUFFER; v.j++)   \
+    for (v.j = 0; v.j < LENGTH_DCT_REG_BUFFER; v.j++)   \
     {                                                   	\
-        v.FIRCoeff[v.j] = 2.0/MAX_LENGTH_DCT_REG_BUFFER * cos(2 * PI * 1.0 * (v.j + v.k)/v.BufferHistoryLength);	\
+        v.FIRCoeff[v.j] = 2.0/LENGTH_DCT_REG_BUFFER * cos(2 * PI * 1.0 * (v.j + v.k)/v.BufferHistoryLength);	\
     }                                                   	\
     v.j = 0;                                            	\
 }

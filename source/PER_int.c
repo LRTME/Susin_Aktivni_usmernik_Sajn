@@ -77,6 +77,12 @@ float 			THD_tok_grid = 0.0;
 volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
 
+// spremenljivke za FIR filter iz FPU modula
+
+extern FIR_FP  firFP;
+extern float dbuffer[LENGTH_DCT_REG_BUFFER];
+extern float const coeff[LENGTH_DCT_REG_BUFFER];
+
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
 SLEW_float  nap_out_slew = SLEW_FLOAT_DEFAULTS;
@@ -158,6 +164,7 @@ int     interrupt_overflow_counter = 0;
 
 // zaèasne spremenljivke
 float 	temp1 = 0.0;
+float 	temp2 = 0.0;
 
 // kot, ki se spreminja z 1 Hz
 float 	ref_kot = 0.0;
@@ -446,13 +453,19 @@ void input_bridge_control(void)
 
 
         /* DCT REGULATOR */
-/*
- 	 	 tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
+
+ 	 	tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
         tok_grid_dct_reg.Fdb = cos(2* PI * ref_kot);
         tok_grid_dct_reg.SamplingSignal = ref_kot;
 
+        // TEST FIR FILTRA
+ 	 	tok_grid_dct_reg.Ref = 10.0 + cos(2* PI * 20.0 * ref_kot) + 0.1 * cos(2 * PI * 100.0 * ref_kot);
+
+ 	    TIC_start_1();
         DCT_REG_CALC(&tok_grid_dct_reg);
-*/
+        TIC_stop_1();
+
+        temp1 = (float) TIC_time_1 * 1/CPU_FREQ;
         /* DCT REGULATOR */
 
 /*
@@ -1065,8 +1078,8 @@ void PER_int_setup(void)
     dlog.iptr4 = &tok_dc_abf;
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &nap_out_reg.Fdb;
-    dlog.iptr7 = &tok_out;
-    dlog.iptr8 = &tok_grid_rep_reg.Out; // &ref_kot
+    dlog.iptr7 = &tok_grid_dct_reg.Out;
+    dlog.iptr8 = &tok_grid_dct_reg.Ref; // &ref_kot
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -1117,6 +1130,12 @@ void PER_int_setup(void)
     tok_grid_dct_reg.OutMax = 0.5;
     tok_grid_dct_reg.OutMin = -0.5;
     DCT_REG_FIR_COEFF_CALC_MACRO(tok_grid_dct_reg);
+
+	// FIR Generic Filter Initialisation
+	firFP.order = LENGTH_DCT_REG_BUFFER;
+	firFP.dbuffer_ptr = dbuffer;
+	firFP.coeff_ptr = (float *)coeff;
+	firFP.init(&firFP);
 
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);

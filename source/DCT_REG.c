@@ -14,7 +14,17 @@
 
 // globalne spremenljivke
 
+// spremenljivke za FIR filter iz FPU modula
 
+// Create an Instance of FIRFILT_GEN module and place the object in "firfilt" section
+#pragma DATA_SECTION(firFP, "firfilt")
+FIR_FP  firFP = FIR_FP_DEFAULTS;
+// Define the Delay buffer for the 50th order filter and place it in "firldb" section
+#pragma DATA_SECTION(dbuffer, "firldb")
+float dbuffer[LENGTH_DCT_REG_BUFFER];
+// Define Constant Co-efficient Array  and place the .constant section in ROM memory
+#pragma DATA_SECTION(coeff, "coefffilt");
+float const coeff[LENGTH_DCT_REG_BUFFER] = FIR_FP_LPF256;
 
 
 
@@ -30,12 +40,21 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
+
+
     // program
-/*
+
+
+	// TEST FIR FILTRA
+
+
+
+
+
     // omejitev bufferja
-    if (v->BufferHistoryLength > MAX_LENGTH_DCT_REG_BUFFER)
+    if (v->BufferHistoryLength > LENGTH_DCT_REG_BUFFER)
     {
-        v->BufferHistoryLength = MAX_LENGTH_DCT_REG_BUFFER;
+        v->BufferHistoryLength = LENGTH_DCT_REG_BUFFER;
     }
     else if (v->BufferHistoryLength < 1)
     {
@@ -50,7 +69,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
-*/
+
 	/* circular buffer */
 /*
     // èe se indeks spremeni, potem gre algoritem dalje (vsako periodo signala, ne pa vsako vzorèno periodo/interval)
@@ -95,29 +114,19 @@ void DCT_REG_CALC (DCT_REG_float *v)
         /* DCT filter - FIR filter */
 		
 //		v->ErrSum = v->Kdct * v->Err;
+/*
 		for (v->j = 0; v->j < 200; v->j++)
 			{
-/*				v->CircularBufferIndex = v->i - v->j; // predvidevam, da indeks i vedno le narašèa
+				v->CircularBufferIndex = v->i - v->j; // predvidevam, da indeks i vedno le narašèa
 				if (v->CircularBufferIndex < 0)
 				{
 					v->CircularBufferIndex = v->CircularBufferIndex + v->BufferHistoryLength;
 				}
 
 				v->ErrSum = v->ErrSum + v->FIRCoeff[v->j] * v->ErrSumHistory[v->CircularBufferIndex];
-*/			}
-/*
-DCT_filter:
-
-
-		if (v->j < 20)
-		{
-			v->j++;
-			goto DCT_filter;
-		}
-
-
-		v->j = 0;
+			}
 */
+
 /*
         // omejim trenutni error, da ne gre v nasièenje
         v->ErrSum = (v->ErrSum > v->ErrSumMax)? v->ErrSumMax: v->ErrSum;
@@ -155,5 +164,9 @@ DCT_filter:
 */
 
 
+
+    firFP.input= v->Ref;
+    firFP.calc(&firFP);
+    v->Out = firFP.output;
 
 } // konec funkcije
