@@ -80,8 +80,8 @@ volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 // spremenljivke za FIR filter iz FPU modula
 
 extern FIR_FP  firFP;
-extern float dbuffer[LENGTH_DCT_REG_BUFFER];
-extern float const coeff[LENGTH_DCT_REG_BUFFER];
+extern float dbuffer[FIR_FILTER_NUMBER_OF_COEFF];
+extern float const coeff[FIR_FILTER_NUMBER_OF_COEFF];
 
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
@@ -165,9 +165,17 @@ int     interrupt_overflow_counter = 0;
 // zaèasne spremenljivke
 float 	temp1 = 0.0;
 float 	temp2 = 0.0;
+float 	temp3 = 0.0;
 
-// kot, ki se spreminja z 1 Hz
+// koti, ki se spreminjajo s konst. frekvenco in ekvidistanènim vzorènim èasom
+float 	ref_freq = 50.0;
 float 	ref_kot = 0.0;
+float 	kot_1Hz = 0.0;
+float 	kot_10Hz = 0.0;
+float 	kot_50Hz = 0.0;
+float 	kot_100Hz = 0.0;
+float 	kot_1000Hz = 0.0;
+
 
 void check_limits(void);
 void get_electrical(void);
@@ -209,7 +217,7 @@ void interrupt PER_int(void)
     }
 
     // dodam štetje sekund
-    if (num_of_s_passed > 60)
+    if (num_of_s_passed > 59)
     {
     	num_of_s_passed = 0;
     	num_of_min_passed = num_of_min_passed + 1;
@@ -221,8 +229,8 @@ void interrupt PER_int(void)
     	num_of_min_passed = 0;
     }
 
-    // dodam svoj kot, ki se spreminja v obmoèju od [0,1) s frekvenco 1 Hz
-    ref_kot = ref_kot + 50.0 * 1.0/SAMP_FREQ;
+    // dodam kot, ki se spreminja v obmoèju od [0,1) s frekvenco "ref_freq"
+    ref_kot = ref_kot + ref_freq * 1.0/SAMP_FREQ;
     if (ref_kot > 1.0)
     {
     	ref_kot = ref_kot - 1.0;
@@ -230,6 +238,28 @@ void interrupt PER_int(void)
     if (ref_kot < 0.0)
     {
     	ref_kot = ref_kot + 1.0;
+    }
+
+    // dodam kot, ki se spreminja v obmoèju od [0,1) s frekvenco 50 Hz
+    kot_50Hz = kot_50Hz + 50.0 * 1.0/SAMP_FREQ;
+    if (kot_50Hz > 1.0)
+    {
+    	kot_50Hz = kot_50Hz - 1.0;
+    }
+    if (kot_50Hz < 0.0)
+    {
+    	kot_50Hz = kot_50Hz + 1.0;
+    }
+
+    // dodam kot, ki se spreminja v obmoèju od [0,1) s frekvenco 50 Hz
+    kot_1000Hz = kot_1000Hz + 1000.0 * 1.0/SAMP_FREQ;
+    if (kot_1000Hz > 1.0)
+    {
+    	kot_1000Hz = kot_1000Hz - 1.0;
+    }
+    if (kot_1000Hz < 0.0)
+    {
+    	kot_1000Hz = kot_1000Hz + 1.0;
     }
 
     // vsakih 10ms poklicem SD_card timer handler
@@ -242,7 +272,7 @@ void interrupt PER_int(void)
 
     // generiram želeno vrednost
     REF_gen();
-
+/*
     // vkljapljam in izklapljam breme
     if (ref_gen.kot < ref_gen_load)
     {
@@ -252,7 +282,7 @@ void interrupt PER_int(void)
     {
         PCB_load_relay_off();
     }
-
+*/
     // vzorèim in poraèunam vse izpeljane velièine
     get_electrical();
 
@@ -422,7 +452,7 @@ void input_bridge_control(void)
 
         	RES_REG_CALC(tok_grid_res_reg);
         }
-        /* RESONANÈNI REGULATOR */
+        /* End of RESONANÈNI REGULATOR */
 
 
 
@@ -452,27 +482,33 @@ void input_bridge_control(void)
         */
 
 
+
+
         /* DCT REGULATOR */
 
- 	 	tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
+// 	 	tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
         tok_grid_dct_reg.Fdb = cos(2* PI * ref_kot);
         tok_grid_dct_reg.SamplingSignal = ref_kot;
 
         // TEST FIR FILTRA
- 	 	tok_grid_dct_reg.Ref = 10.0 + cos(2* PI * 20.0 * ref_kot) + 0.1 * cos(2 * PI * 100.0 * ref_kot);
+        tok_grid_dct_reg.Ref = 10.0 + 1.0*cos(2* PI * kot_50Hz) + 0.2*cos(2* PI * kot_1000Hz) ;
+
 
  	    TIC_start_1();
         DCT_REG_CALC(&tok_grid_dct_reg);
         TIC_stop_1();
 
-        temp1 = (float) TIC_time_1 * 1/CPU_FREQ;
-        /* DCT REGULATOR */
-
+        temp1 = (float) TIC_time_1 * 1.0/CPU_FREQ;
 /*
-        TIC_start_1();
-        TIC_stop_1();
-        temp1 = (float)TIC_time_1;
+        // zaznavanje maksimuma na izhodu FIR filtra
+        if(firFP.output > temp3 && firFP.output < 2.0)
+        {
+        	temp2 = ref_freq;
+        	temp3 = firFP.output;
+        }
 */
+
+        /* End of DCT REGULATOR */
 
 
 
@@ -486,7 +522,7 @@ void input_bridge_control(void)
 
         	REP_REG_CALC(&tok_grid_rep_reg);
         }
-        /* REPETITIVNI REGULATOR */
+        /* End of REPETITIVNI REGULATOR */
 
 
 
@@ -1075,11 +1111,11 @@ void PER_int_setup(void)
     dlog.iptr1 = &nap_grid;
     dlog.iptr2 = &tok_grid;
     dlog.iptr3 = &nap_dc_reg.Fdb;
-    dlog.iptr4 = &tok_dc_abf;
+    dlog.iptr4 = &nap_out_reg.Fdb;
     dlog.iptr5 = &tok_dc_abf;
-    dlog.iptr6 = &nap_out_reg.Fdb;
-    dlog.iptr7 = &tok_grid_dct_reg.Out;
-    dlog.iptr8 = &tok_grid_dct_reg.Ref; // &ref_kot
+    dlog.iptr6 = &temp2;
+    dlog.iptr7 = &firFP.output;
+    dlog.iptr8 = &firFP.input; // &ref_kot
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -1132,7 +1168,7 @@ void PER_int_setup(void)
     DCT_REG_FIR_COEFF_CALC_MACRO(tok_grid_dct_reg);
 
 	// FIR Generic Filter Initialisation
-	firFP.order = LENGTH_DCT_REG_BUFFER;
+	firFP.order = FIR_FILTER_NUMBER_OF_COEFF - 1;
 	firFP.dbuffer_ptr = dbuffer;
 	firFP.coeff_ptr = (float *)coeff;
 	firFP.init(&firFP);

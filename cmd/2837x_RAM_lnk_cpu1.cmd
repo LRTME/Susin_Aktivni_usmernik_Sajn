@@ -48,10 +48,7 @@ PAGE 1 :
     D_M0        : origin = 0x000122,    length = 0x0002DE       /* on-chip RAM block M0 */
     D_M1        : origin = 0x000400,    length = 0x000400       /* on-chip RAM block M1 */
     
-    D_GS613     : origin = 0x012000,    length = 0x008000       /* on-chip RAM block Global Shared 6-13 */
-    D_GS14		: origin = 0x01A000,    length = 0x001000       /* on-chip RAM block Global Shared 14 */
-    D_GS15a		: origin = 0x01B000,    length = 0x000400       /* on-chip RAM block Global Shared 15 - first part */
-    D_GS15b		: origin = 0x01B400,    length = 0x000600       /* on-chip RAM block Global Shared 15 - second part */
+    D_GS615     : origin = 0x012000,    length = 0x00A000       /* on-chip RAM block Global Shared 6-13 */
    
     CPU2TOCPU1RAM   : origin = 0x03F800,    length = 0x000400
     CPU1TOCPU2RAM   : origin = 0x03FC00,    length = 0x000400
@@ -61,11 +58,11 @@ SECTIONS
 {
 
 /* VARIABLES */
-    .bss: >>        D_GS613 | D_GS14  PAGE = 1
-    .ebss: >>       D_GS613 | D_GS14  PAGE = 1
-    firldb > 		D_GS14   		  PAGE = 1					/* Variable for fast FIR filter realization with FPU unit - max 1024 kwords */
-   	firfilt			ALIGN(0x400) > D_GS15a   PAGE = 1			/* Variable for fast FIR filter realization with FPU unit - max 1024 kwords*/
-   	coefffilt 		ALIGN(0x400) > D_GS15b   PAGE = 1			/* Variable for fast FIR filter realization with FPU unit - max 1024 kwords*/
+    .bss: >>        D_GS615 	PAGE = 1
+    .ebss: >>       D_GS615 	PAGE = 1
+    firfilt > 		D_GS615   	PAGE = 1			/* Section for struct for fast FIR filter realization with FPU unit */
+    firldb > 		D_GS615   	PAGE = 1			/* Section for delay buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+   	coefffilt > 	D_GS615   	PAGE = 1			/* Section for coeff buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
 
 				 /* align(0x400) pomeni, da se spremenljivka "firfilt" naloži (zapiše) na lokacijo, ki je veèkratnik od 0x400,
 				 	"coefffilt" pa na lokacijo 0x800 (kar je naslednji veèkratnik od 0x400) znotraj bloka D_GSxx
@@ -99,12 +96,12 @@ SECTIONS
                     PAGE = 1
                     
 /* HEAP */  
-    .sysmem: >>     D_GS613 | D_GS14  PAGE = 1
-    .esysmem: >>    D_GS613 | D_GS14  PAGE = 1
+    .sysmem: >>     D_GS615 PAGE = 1
+    .esysmem: >>    D_GS615 PAGE = 1
 
 /* CONSTANTS */
-    .econst: >>     D_GS613 | D_GS14  PAGE = 1
-    .const: >>      D_GS613 | D_GS14  PAGE = 1
+    .econst: >>     D_GS615 PAGE = 1
+    .const: >>      D_GS615 PAGE = 1
 
 /* STARTUP CODE */
     codestart >     RESET_M         			PAGE = 0
