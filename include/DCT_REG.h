@@ -17,25 +17,31 @@
 #include    "math.h"
 #include	"fpu_filter.h" // for FIR filter: max 512 samples in period, because of lack of Global Shared RAM
 
-    #ifndef PI
-    #define PI  3.1415926535897932384626433832795
-    #endif
-
+#ifndef PI
+#define PI  3.1415926535897932384626433832795
+#endif
 
 
 // maximal length of buffer for saving history of accumulated error and number of coefficients for DCT (FIR) filter
 #define     FIR_FILTER_NUMBER_OF_COEFF   	400
 
 // maximal length of harmonics array
-#define		LENGTH_OF_HARMONICS_ARRAY		10
+#define		LENGTH_OF_HARMONICS_ARRAY		3
+// harmonics selection that passes through DCT filter (i.e. "{1,5,7}" means that 1st, 5th and 7th harmonic passes through DCT filter, others are blocked)
+#define		SELECTED_HARMONICS				{1,0,0}
 
+// number of samples for compensation of phase delay
+#define		LAG_COMPENSATION				0
+
+// coefficients of FIR filter declaration
+extern float coeff[FIR_FILTER_NUMBER_OF_COEFF];
 
 typedef struct DCT_REG_FLOAT_STRUCT
 {
     float SamplingSignal;          	// Input: Signal that increments index [0, 1); CAUTION: SAMPLING SIGNAL MUST INCREMENT ONLY (UNTIL OVERFLOW)!
     float Ref;                      // Input: Reference input
     float Fdb;                      // Input: Feedback input
-    int   BufferHistoryLength;    	// Parameter: Length of buffer - base frequency definition, which must be the same as FIR_FILTER_NUMBER_OF_COEFF, otherwise FIR filter won't work properly
+    int   BufferHistoryLength;    	// Parameter: Length of buffer - must be the same as FIR_FILTER_NUMBER_OF_COEFF, otherwise FIR filter won't work properly
     float Kdct;                   	// Parameter: Gain for Err
 	int	  Harmonics[LENGTH_OF_HARMONICS_ARRAY];	// Parameter: Harmonics that will pass through DCT filter
 	float FIRCoeff[FIR_FILTER_NUMBER_OF_COEFF];	// Parameter: FIR filter coefficients (so called DCT filter)
@@ -80,24 +86,44 @@ typedef struct DCT_REG_FLOAT_STRUCT
     0.0      					\
 }
 
-#define DCT_REG_INIT_MACRO(v)                          		\
-{                                                       	\
-    for (v.i = 0; v.i < FIR_FILTER_NUMBER_OF_COEFF; v.i++)   	\
-    {                                                   	\
-    	v.CorrectionHistory[v.i] = 0.0;                   		\
-    	v.FIRCoeff[v.i] = 0.0;                   			\
-    }                                                   	\
-    v.i = 0;                                            	\
+#define DCT_REG_INIT_MACRO(v)                          						\
+{                                                       					\
+    for(v.i = 0; v.i < FIR_FILTER_NUMBER_OF_COEFF; v.i++)   				\
+    {                                                   					\
+    	v.CorrectionHistory[v.i] = 0.0;                     				\
+    	v.FIRCoeff[v.i] = 0.0;                   							\
+    }                                                   					\
+    v.i = 0;                                            					\
 }
 
-#define DCT_REG_FIR_COEFF_CALC_MACRO(v)                							\
-{                                                       						\
-    for (v.j = 0; v.j < FIR_FILTER_NUMBER_OF_COEFF; v.j++)   						\
-    {                                                   						\
-        v.FIRCoeff[v.j] = 2.0/FIR_FILTER_NUMBER_OF_COEFF * 							\
-						cos(2 * PI * 1.0 * (v.j + v.k)/v.BufferHistoryLength);	\
-    }                                                   						\
-    v.j = 0;                                            						\
+#define DCT_REG_FIR_COEFF_CALC_MACRO(v)                														\
+{                                                       													\
+	int temp_array[LENGTH_OF_HARMONICS_ARRAY] = SELECTED_HARMONICS; 										\
+	v.k = LAG_COMPENSATION;																					\
+																											\
+	for(v.i = 0; v.i < LENGTH_OF_HARMONICS_ARRAY; v.i++)													\
+	{																										\
+		v.Harmonics[v.i] =  temp_array[v.i];																\
+	}																										\
+																											\
+    for(v.j = 0; v.j < FIR_FILTER_NUMBER_OF_COEFF; v.j++)   												\
+    {                                                   													\
+    	v.FIRCoeff[v.j] = 0.0;																				\
+        for(v.i = 0; v.i < LENGTH_OF_HARMONICS_ARRAY; v.i++)												\
+		{																									\
+        	if(v.Harmonics[v.i] != 0)																		\
+			{																								\
+				v.FIRCoeff[v.j] = v.FIRCoeff[v.j] + 														\
+								  2.0/FIR_FILTER_NUMBER_OF_COEFF *  										\
+								  cos( 2 * PI * v.Harmonics[v.i] * 											\
+								  ( (float)(v.j + v.k) ) / (FIR_FILTER_NUMBER_OF_COEFF) );					\
+			}																								\
+		}																									\
+																											\
+		coeff[v.j] = v.FIRCoeff[v.j];																		\
+    }                                                   													\
+    v.j = 0;                                            													\
+    v.i = 0;																								\
 }
 
 extern void DCT_REG_CALC (DCT_REG_float *v);

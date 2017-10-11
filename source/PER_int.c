@@ -81,7 +81,7 @@ volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
 extern FIR_FP  firFP;
 extern float dbuffer[FIR_FILTER_NUMBER_OF_COEFF];
-extern float const coeff[FIR_FILTER_NUMBER_OF_COEFF];
+extern float coeff[FIR_FILTER_NUMBER_OF_COEFF];
 
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
@@ -490,7 +490,7 @@ void input_bridge_control(void)
 //		tok_grid_dct_reg.Fdb = tok_grid_reg.Fdb;
         tok_grid_dct_reg.SamplingSignal = kot_50Hz;
 
-		tok_grid_dct_reg.Ref = 1.0*cos(2* PI * kot_50Hz);
+		tok_grid_dct_reg.Ref = 1.0*cos(2 * PI * kot_50Hz);
 		tok_grid_dct_reg.Fdb = 0.0;
 
 /*
@@ -555,7 +555,7 @@ void input_bridge_control(void)
         }
 */
 		FB_update(tok_grid_reg.Out);
-
+//		FB_update(tok_grid_reg.Out + tok_grid_dct_reg.Out);
 
 
         // izraèunam osnovni harmonik omrežnega toka
@@ -1123,7 +1123,7 @@ void PER_int_setup(void)
     dlog.iptr4 = &nap_out_reg.Fdb;
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &temp2;
-    dlog.iptr7 = &firFP.output;
+    dlog.iptr7 = &tok_grid_dct_reg.Err;
     dlog.iptr8 = &tok_grid_dct_reg.Out; // &ref_kot
 
     // inicializitam generator referenènega signala
