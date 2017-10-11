@@ -25,15 +25,14 @@
 void REP_REG_CALC (REP_REG_float *v)
 {
     // lokalne spremenljivke
-
-
+	static int first_start = 0;
 
 
 
 
     // program
 
-    // omejitev bufferja
+    // omejitev dolžine circular bufferja
     if (v->BufferHistoryLength > MAX_LENGTH_REP_REG_BUFFER)
     {
         v->BufferHistoryLength = MAX_LENGTH_REP_REG_BUFFER;
@@ -42,9 +41,23 @@ void REP_REG_CALC (REP_REG_float *v)
     {
         v->BufferHistoryLength = 1;
     }
+	
+	// omejitev kompenzacije zakasnitve, ki ne sme presegati dolžine bufferja
+    if (v->k > v->BufferHistoryLength)
+    {
+        v->k = v->BufferHistoryLength;
+    }
+    else if (v->k < 0)
+    {
+        v->k = 0;
+    }
 
+    // omejitev vzorènega signala med 0.0 in 0.9999 (SamplingSignal ne sme biti enak ena, ker mora biti indeks i omejen od 0 do BufferHistoryLength-1)
+    v->SamplingSignal = (v->SamplingSignal > 0.99999)? 0.99999: v->SamplingSignal;
+    v->SamplingSignal = (v->SamplingSignal < 0.0)? 0.0: v->SamplingSignal;
 
-
+	
+	
 
     // izraèun trenutnega indeksa bufferja
     v->i = (int)(v->SamplingSignal*v->BufferHistoryLength);
@@ -52,13 +65,23 @@ void REP_REG_CALC (REP_REG_float *v)
 
 
 
-	/* circular buffer */
+
 
     // èe se indeks spremeni, potem gre algoritem dalje (vsako periodo signala, ne pa vsako vzorèno periodo/interval)
-    if ((v->i != v->i_prev) || (v->i == 0 && v->i_prev == 0))
+    if ((v->i != v->i_prev) ||  (first_start == 0))
     {
+    	if(v->i != v->i_prev)
+    	{
+			// ko je program prviè na tem mestu, dvignemo zastavico
+			first_start = 1;
+    	}
+			
+		/***************************************************/
+		/* circular buffer */
+		/***************************************************/
+		
         // manipuliranje z indeksi - zaradi circular bufferja
-        if (v->i > v->i_prev)
+        if ( (v->i > v->i_prev) || (v->i - v->i_prev == -(v->BufferHistoryLength - 1)) || (first_start == 0) )
         {
             // indeks, ki kaže v prihodnost (potrebujem za kompenzacijo zakasnitve)
             v->index = v->i + v->k;
@@ -95,7 +118,7 @@ void REP_REG_CALC (REP_REG_float *v)
             }
 
         } // end of if (v->i > v->i_prev)
-        else if (v->i < v->i_prev)
+        else if ( (v->i < v->i_prev) || (v->i - v->i_prev == (v->BufferHistoryLength - 1)) )
         {
             // indeks, ki kaže v prihodnost (potrebujem za kompenzacijo zakasnitve)
             v->index = v->i - v->k;
@@ -135,8 +158,10 @@ void REP_REG_CALC (REP_REG_float *v)
 
 
 
+		/***************************************************/
         /* koda repetitivnega regulatorja */
-
+		/***************************************************/
+		
         // izraèunam trenutni error
         v->Err = v->Ref - v->Fdb;
 

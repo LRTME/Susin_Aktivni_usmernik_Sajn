@@ -41,19 +41,19 @@ typedef struct DCT_REG_FLOAT_STRUCT
 	float FIRCoeff[FIR_FILTER_NUMBER_OF_COEFF];	// Parameter: FIR filter coefficients (so called DCT filter)
     int   k;                        // Parameter: Number of samples for compensation of delay
     float ErrSumMax;        		// Parameter: Maximum error
-    float ErrSumMin;        		// Parameter: Minimum errorfloat OutMax;
+    float ErrSumMin;        		// Parameter: Minimum error
     float OutMax;					// Parameter: Maximum output
     float OutMin;                   // Parameter: Minimum output
     float Err;                      // Variable: Error
     float ErrSum;           		// Variable: Error that will be accumulated
     float Correction;               // Variable: Correction that is summed with Ref
-    int   i;                        // Variable: Index i in ErrSumHistory
+    int   i;                        // Variable: Index i in CorrectionHistory
 	int   i_prev;                   // Variable: i from previous period
 	int   index;                    // Variable: Index build from i and LagCompensation
 	int   j;                        // Variable: Index j in FIR filter coefficient and in for loop when performing convolution
 	int   CircularBufferIndex;		// Variable: Index of circular buffer
     float Out;                      // Output: DCT_REG output
-    float ErrSumHistory[FIR_FILTER_NUMBER_OF_COEFF];	// History: Buffer of errors from previous period
+    float CorrectionHistory[FIR_FILTER_NUMBER_OF_COEFF];	// History: Buffer of errors from previous period
 } DCT_REG_float;
 
 
@@ -84,7 +84,7 @@ typedef struct DCT_REG_FLOAT_STRUCT
 {                                                       	\
     for (v.i = 0; v.i < FIR_FILTER_NUMBER_OF_COEFF; v.i++)   	\
     {                                                   	\
-    	v.ErrSumHistory[v.i] = 0.0;                   		\
+    	v.CorrectionHistory[v.i] = 0.0;                   		\
     	v.FIRCoeff[v.i] = 0.0;                   			\
     }                                                   	\
     v.i = 0;                                            	\

@@ -486,13 +486,23 @@ void input_bridge_control(void)
 
         /* DCT REGULATOR */
 
-// 	 	tok_grid_dct_reg.Ref = 0.99 * cos(2* PI * ref_kot);
-        tok_grid_dct_reg.Fdb = cos(2* PI * ref_kot);
-        tok_grid_dct_reg.SamplingSignal = ref_kot;
+//		tok_grid_dct_reg.Ref = tok_grid_reg.Ref;
+//		tok_grid_dct_reg.Fdb = tok_grid_reg.Fdb;
+        tok_grid_dct_reg.SamplingSignal = kot_50Hz;
 
-        // TEST FIR FILTRA
-        tok_grid_dct_reg.Ref = 10.0 + 1.0*cos(2* PI * kot_50Hz) + 0.2*cos(2* PI * kot_1000Hz) ;
+		tok_grid_dct_reg.Ref = 1.0*cos(2* PI * kot_50Hz);
+		tok_grid_dct_reg.Fdb = 0.0;
 
+/*
+        if(num_of_s_passed > 5 && num_of_s_passed < 7)
+		{
+			tok_grid_dct_reg.Fdb = 0.0;
+		}
+		else
+		{
+			tok_grid_dct_reg.Fdb = tok_grid_dct_reg.Fdb;
+		}
+*/
 
  	    TIC_start_1();
         DCT_REG_CALC(&tok_grid_dct_reg);
@@ -518,7 +528,7 @@ void input_bridge_control(void)
         {
 			tok_grid_rep_reg.Ref = tok_grid_reg.Ref;
 			tok_grid_rep_reg.Fdb = tok_grid_reg.Fdb;
-			tok_grid_rep_reg.SamplingSignal = ref_kot;
+			tok_grid_rep_reg.SamplingSignal = kot_50Hz;
 
         	REP_REG_CALC(&tok_grid_rep_reg);
         }
@@ -544,8 +554,7 @@ void input_bridge_control(void)
         	break;
         }
 */
-        FB_update(tok_grid_reg.Out);
-
+		FB_update(tok_grid_reg.Out);
 
 
 
@@ -1115,7 +1124,7 @@ void PER_int_setup(void)
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &temp2;
     dlog.iptr7 = &firFP.output;
-    dlog.iptr8 = &firFP.input; // &ref_kot
+    dlog.iptr8 = &tok_grid_dct_reg.Out; // &ref_kot
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -1176,7 +1185,8 @@ void PER_int_setup(void)
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_rep_reg.Krep = 0.0; //0.02
+    tok_grid_rep_reg.Krep = 0.0; // 0.02
+    tok_grid_rep_reg.k = 0; // 0
     tok_grid_rep_reg.w0 = 0.2;
     tok_grid_rep_reg.w1 = 0.2;
     tok_grid_rep_reg.w2 = 0.2;

@@ -20,28 +20,28 @@
 
 typedef struct REP_REG_FLOAT_STRUCT
 {
-    float SamplingSignal;          	// Input: Signal that increments index [0, 1)
+    float SamplingSignal;          	// Input: Signal that increments or decrements [0, 1)
     float Ref;                      // Input: Reference input
     float Fdb;                      // Input: Feedback input
-    int   BufferHistoryLength;    	// Parameter: Number of samples in buffer
+    int   BufferHistoryLength;    	// Input: Length of buffer
+    float ErrSumMax;        		// Parameter: Maximum error
+    float ErrSumMin;        		// Parameter: Minimum error
     float Krep;                   	// Parameter: Gain for Err
     float w0;                       // Parameter: Weight for ErrSumHistory [i]
     float w1;                       // Parameter: Weight for ErrSumHistory [i + 1] and ErrSumHistory [i - 1]
     float w2;                       // Parameter: Weight for ErrSumHistory [i + 2] and ErrSumHistory [i - 2]
-    int   k;                        // Parameter: Number of samples for compensation of delay
-    float ErrSumMax;        		// Parameter: Maximum error
-    float ErrSumMin;        		// Parameter: Minimum error
     float OutMax;                   // Parameter: Maximum output
     float OutMin;                   // Parameter: Minimum output
     float Err;                      // Variable: Error
     float ErrSum;           		// Variable: Error that will be accumulated
     float Correction;               // Variable: Correction that is summed with Ref
     int   i;                        // Variable: Index i in ErrSumHistory
-    int   i_prev;                   // Variable: i from previous period
+    int   i_prev;                   // History: i from previous period
     int   i_plus_one;               // Variable: i + 1 sample in history
     int   i_minus_one;              // Variable: i - 1 sample in history
     int   i_plus_two;               // Variable: i + 2 sample in history
     int   i_minus_two;              // Variable: i - 2 sample in history
+    int   k;                        // Variable: Number of samples for compensation of delay
     int   index;                    // Variable: Index (i + k) in ErrSumHistory (used in Correction) - includes k
     float Out;                      // Output: REP_REG output
     float ErrSumHistory[MAX_LENGTH_REP_REG_BUFFER]; // History: Buffer of errors from previous period
@@ -58,14 +58,14 @@ typedef struct REP_REG_FLOAT_STRUCT
     0.0,    					\
     0.0,    					\
     0.0,    					\
-    0,	    					\
-    0.0,    					\
-    0.0,   						\
     0.0,    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
-    0.0,      					\
+    0.0,    					\
+    0.0,    					\
+    0.0,    					\
+    0,      					\
     0,      					\
     0,      					\
     0,      					\

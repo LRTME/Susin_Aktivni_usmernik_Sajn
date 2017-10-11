@@ -98,7 +98,7 @@ labela:
     if (PCB_HW_trip() == TRUE)
     {
         // zato kar resetiram MCU, da se zaženemo še enkrat
-        asm(" ESTOP0");
+        asm(" ESTOP0 ");
         DINT;
         goto labela;
         /*
