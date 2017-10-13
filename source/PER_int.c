@@ -482,7 +482,7 @@ void input_bridge_control(void)
 
 
 
-/*
+
         // posljem vse skupaj na mostic
         switch(extra_i_grid_reg_type)
         {
@@ -499,9 +499,8 @@ void input_bridge_control(void)
             FB_update(tok_grid_reg.Out);
         	break;
         }
-*/
+
 //        FB_update(tok_grid_reg.Out);
-        FB_update(tok_grid_reg.Out + tok_grid_dct_reg.Out);
 
 
         // izraèunam osnovni harmonik omrežnega toka
@@ -1136,8 +1135,8 @@ void PER_int_setup(void)
     tok_grid_rep_reg.w0 = 0.2;
     tok_grid_rep_reg.w1 = 0.2;
     tok_grid_rep_reg.w2 = 0.2;
-    tok_grid_rep_reg.ErrSumMax = 0.5;
-    tok_grid_rep_reg.ErrSumMin = -0.5;
+    tok_grid_rep_reg.ErrSumMax = 0.6;
+    tok_grid_rep_reg.ErrSumMin = -0.6;
     tok_grid_rep_reg.OutMax = 0.5;
     tok_grid_rep_reg.OutMin = -0.5;
 
