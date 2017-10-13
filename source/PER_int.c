@@ -76,6 +76,10 @@ float 			tok_grid_rms = 0.0;
 float 			THD_tok_grid = 0.0;
 volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
+float 			cas_izracuna_PID_reg = 0.0;
+float 			cas_izracuna_RES_reg = 0.0;
+float 			cas_izracuna_DCT_reg = 0.0;
+float 			cas_izracuna_REP_reg = 0.0;
 
 // spremenljivke za FIR filter iz FPU modula
 
@@ -421,24 +425,6 @@ void input_bridge_control(void)
 
         PID_FLOAT_CALC(tok_grid_reg);
 
-        // dodam še resonanèni regulator
-/*
-        if (num_of_s_passed > 10 && num_of_min_passed == 0)
-        {
-            tok_grid_res_reg.Fdb = 0.99 * sin(2 * PI * 50.0 * ref_kot);
-        }
-        else
-        {
-        	tok_grid_res_reg.Fdb = sin(2 * PI * 50.0 * ref_kot);
-        }
-
-        if (num_of_s_passed > 30)
-        {
-            tok_grid_res_reg.Fdb = sin(2 * PI * 50.0 * ref_kot);
-        }
-
-        tok_grid_res_reg.Ref = 1.00 * sin(2 * PI * 50.0 * ref_kot);
-*/
 
 
 
@@ -450,63 +436,30 @@ void input_bridge_control(void)
 			tok_grid_res_reg.Kot = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
 			tok_grid_res_reg.Ff = 0;
 
+			TIC_start_1();
         	RES_REG_CALC(tok_grid_res_reg);
+	        TIC_stop_1();
         }
+
+        cas_izracuna_RES_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of RESONANÈNI REGULATOR */
 
 
 
 
-        /*
-                // izraèunam kot, ki je integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-
-                tok_grid_res_reg.Kot = tok_grid_res_reg.Kot + 50.0 * 1.0/SAMP_FREQ;
-
-                if (tok_grid_res_reg.Kot > 1.0)
-                {
-                	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot - 1.0;
-                }
-                if (tok_grid_res_reg.Kot < 0.0)
-                {
-                	tok_grid_res_reg.Kot = tok_grid_res_reg.Kot + 1.0;
-                }
-
-
-                if (num_of_s_passed > 10.0 && num_of_s_passed < 20.0)
-                {
-                	tok_grid_res_reg.Ref = cos(2 * PI * 50.0 * tok_grid_res_reg.Kot);
-                }
-
-                tok_grid_res_reg.Ref = 0.99 * cos(2 * PI * tok_grid_res_reg.Kot);
-                tok_grid_res_reg.Fdb = cos(2 * PI * tok_grid_res_reg.Kot);
-        */
-
-
-
-
         /* DCT REGULATOR */
-
-//		tok_grid_dct_reg.Ref = tok_grid_reg.Ref;
-//		tok_grid_dct_reg.Fdb = tok_grid_reg.Fdb;
-        tok_grid_dct_reg.SamplingSignal = kot_50Hz;
-
-		tok_grid_dct_reg.Ref = 1.0*cos(2 * PI * kot_50Hz);
-		tok_grid_dct_reg.Fdb = 0.0;
-
- 	    TIC_start_1();
-        DCT_REG_CALC(&tok_grid_dct_reg);
-        TIC_stop_1();
-
-        temp1 = (float) TIC_time_1 * 1.0/CPU_FREQ;
-/*
-        // zaznavanje maksimuma na izhodu FIR filtra
-        if(firFP.output > temp3 && firFP.output < 2.0)
+        if (extra_i_grid_reg_type == DCT)
         {
-        	temp2 = ref_freq;
-        	temp3 = firFP.output;
-        }
-*/
+			tok_grid_dct_reg.Ref = tok_grid_reg.Ref;
+			tok_grid_dct_reg.Fdb = tok_grid_reg.Fdb;
+			tok_grid_dct_reg.SamplingSignal = kot_50Hz;
 
+	 	    TIC_start_1();
+	        DCT_REG_CALC(&tok_grid_dct_reg);
+	        TIC_stop_1();
+        }
+
+        cas_izracuna_DCT_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of DCT REGULATOR */
 
 
@@ -519,8 +472,12 @@ void input_bridge_control(void)
 			tok_grid_rep_reg.Fdb = tok_grid_reg.Fdb;
 			tok_grid_rep_reg.SamplingSignal = kot_50Hz;
 
+	 	    TIC_start_1();
         	REP_REG_CALC(&tok_grid_rep_reg);
+	        TIC_stop_1();
         }
+
+		cas_izracuna_REP_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of REPETITIVNI REGULATOR */
 
 
@@ -543,8 +500,8 @@ void input_bridge_control(void)
         	break;
         }
 */
-		FB_update(tok_grid_reg.Out);
-//		FB_update(tok_grid_reg.Out + tok_grid_dct_reg.Out);
+//        FB_update(tok_grid_reg.Out);
+        FB_update(tok_grid_reg.Out + tok_grid_dct_reg.Out);
 
 
         // izraèunam osnovni harmonik omrežnega toka
@@ -1110,10 +1067,10 @@ void PER_int_setup(void)
     dlog.iptr2 = &tok_grid;
     dlog.iptr3 = &nap_dc_reg.Fdb;
     dlog.iptr4 = &nap_out_reg.Fdb;
-    dlog.iptr5 = &tok_dc_abf;
-    dlog.iptr6 = &temp2;
-    dlog.iptr7 = &tok_grid_dct_reg.Out;
-    dlog.iptr8 = &tok_grid_dct_reg.Err;
+    dlog.iptr5 = &tok_grid_reg.Fdb;
+    dlog.iptr6 = &tok_grid_reg.Ref;
+    dlog.iptr7 = &tok_grid_reg.Out;
+    dlog.iptr8 = &tok_grid_reg.Err;
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
@@ -1157,8 +1114,8 @@ void PER_int_setup(void)
     // inicializiram DCT regulator omreznega toka
     DCT_REG_INIT_MACRO(tok_grid_dct_reg);
     tok_grid_dct_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_dct_reg.Kdct = 0.0; //0.02
-    tok_grid_dct_reg.k = 0.2;
+    tok_grid_dct_reg.Kdct = 0.0; // 0.02
+    tok_grid_dct_reg.k = LAG_COMPENSATION;
     tok_grid_dct_reg.ErrSumMax = 0.6;
     tok_grid_dct_reg.ErrSumMin = -0.6;
     tok_grid_dct_reg.OutMax = 0.5;
