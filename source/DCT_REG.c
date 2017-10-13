@@ -204,7 +204,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
 		v->Err = v->Ref - v->Fdb;
 
 		// izraèunam novi akumuliran error
-		v->ErrSum = v->Kdct * v->Err +						\
+//		v->ErrSum = v->Kdct * v->Err +						\
 					v->CorrectionHistory[v->index];
 	/*
 		// omejim trenutni error, da ne gre v nasièenje
@@ -214,7 +214,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
-
+v->ErrSum = v->Err;
 		/* DCT filter - FIR filter */
 		firFP.input = v->ErrSum;
 		firFP.calc(&firFP);
@@ -224,8 +224,8 @@ void DCT_REG_CALC (DCT_REG_float *v)
 		v->CorrectionHistory[v->i] = v->Correction;
 
 		// izraèunam izhod
-		v->Out = v->Correction;
-
+//		v->Out = v->Correction;
+v->Out = v->CorrectionHistory[v->index];
 
 	    // shranim vrednost indeksa i, ki bo v naslednjem ciklu prejšnji i
 	    v->i_prev = v->i;
@@ -237,11 +237,11 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
-
+/*
     // omejim izhod
     v->Out = (v->Out > v->OutMax)? v->OutMax: v->Out;
     v->Out = (v->Out < v->OutMin)? v->OutMin: v->Out;
-
+*/
 
 
 

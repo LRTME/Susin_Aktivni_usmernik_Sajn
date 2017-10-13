@@ -30,8 +30,8 @@
 // harmonics selection that passes through DCT filter (i.e. "{1,5,7}" means that 1st, 5th and 7th harmonic passes through DCT filter, others are blocked)
 #define		SELECTED_HARMONICS				{1,0,0}
 
-// number of samples for compensation of phase delay
-#define		LAG_COMPENSATION				0
+// number of samples for compensation of the phase delay
+#define		LAG_COMPENSATION				10
 
 // coefficients of FIR filter declaration
 extern float coeff[FIR_FILTER_NUMBER_OF_COEFF];
@@ -99,13 +99,12 @@ typedef struct DCT_REG_FLOAT_STRUCT
 #define DCT_REG_FIR_COEFF_CALC_MACRO(v)                														\
 {                                                       													\
 	int temp_array[LENGTH_OF_HARMONICS_ARRAY] = SELECTED_HARMONICS; 										\
-	v.k = LAG_COMPENSATION;																					\
 																											\
 	for(v.i = 0; v.i < LENGTH_OF_HARMONICS_ARRAY; v.i++)													\
 	{																										\
 		v.Harmonics[v.i] =  temp_array[v.i];																\
 	}																										\
-																											\
+	/* LAG COMPENSATION HAS NEGATIVE SIGN, BECAUSE OF REALIZATION OF DCT FILTER WITH FPU LIBRARY */			\
     for(v.j = 0; v.j < FIR_FILTER_NUMBER_OF_COEFF; v.j++)   												\
     {                                                   													\
     	v.FIRCoeff[v.j] = 0.0;																				\
@@ -116,10 +115,10 @@ typedef struct DCT_REG_FLOAT_STRUCT
 				v.FIRCoeff[v.j] = v.FIRCoeff[v.j] + 														\
 								  2.0/FIR_FILTER_NUMBER_OF_COEFF *  										\
 								  cos( 2 * PI * v.Harmonics[v.i] * 											\
-								  ( (float)(v.j + v.k) ) / (FIR_FILTER_NUMBER_OF_COEFF) );					\
+								  ( (float)(v.j - LAG_COMPENSATION) ) / (FIR_FILTER_NUMBER_OF_COEFF - 1) );	\
 			}																								\
 		}																									\
-																											\
+	/* FIR FILTER FROM FPU LIBRARY DOESN'T FLIP SIGNAL FROM LEFT TO RIGHT WHILE PERFORMING CONVOLUTION */	\
 		coeff[v.j] = v.FIRCoeff[v.j];																		\
     }                                                   													\
     v.j = 0;                                            													\

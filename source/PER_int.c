@@ -508,6 +508,8 @@ void input_bridge_control(void)
         DCT_REG_CALC(&tok_grid_dct_reg);
         TIC_stop_1();
 
+        temp2 = tok_grid_dct_reg.Out - tok_grid_dct_reg.Err;
+
         temp1 = (float) TIC_time_1 * 1.0/CPU_FREQ;
 /*
         // zaznavanje maksimuma na izhodu FIR filtra
@@ -1111,10 +1113,10 @@ void PER_int_setup(void)
     dlog.auto_time = 1;
     dlog.holdoff_time = 1;
 
-    dlog.prescalar = 20;
+    dlog.prescalar = 2; // 20 -> okno: 1s
 
     dlog.slope = Positive;
-    dlog.trig = &ref_kot; // &ref_kot
+    dlog.trig = &kot_50Hz; // &ref_kot
     dlog.trig_value = 0.01;
 
     dlog.iptr1 = &nap_grid;
@@ -1123,8 +1125,8 @@ void PER_int_setup(void)
     dlog.iptr4 = &nap_out_reg.Fdb;
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &temp2;
-    dlog.iptr7 = &tok_grid_dct_reg.Err;
-    dlog.iptr8 = &tok_grid_dct_reg.Out; // &ref_kot
+    dlog.iptr7 = &tok_grid_dct_reg.Correction;
+    dlog.iptr8 = &tok_grid_dct_reg.Err;
 
     // inicializitam generator referenènega signala
     ref_gen.amp = 2;
