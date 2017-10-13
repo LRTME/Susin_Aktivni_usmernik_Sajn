@@ -493,22 +493,9 @@ void input_bridge_control(void)
 		tok_grid_dct_reg.Ref = 1.0*cos(2 * PI * kot_50Hz);
 		tok_grid_dct_reg.Fdb = 0.0;
 
-/*
-        if(num_of_s_passed > 5 && num_of_s_passed < 7)
-		{
-			tok_grid_dct_reg.Fdb = 0.0;
-		}
-		else
-		{
-			tok_grid_dct_reg.Fdb = tok_grid_dct_reg.Fdb;
-		}
-*/
-
  	    TIC_start_1();
         DCT_REG_CALC(&tok_grid_dct_reg);
         TIC_stop_1();
-
-        temp2 = tok_grid_dct_reg.Out - tok_grid_dct_reg.Err;
 
         temp1 = (float) TIC_time_1 * 1.0/CPU_FREQ;
 /*
@@ -1125,7 +1112,7 @@ void PER_int_setup(void)
     dlog.iptr4 = &nap_out_reg.Fdb;
     dlog.iptr5 = &tok_dc_abf;
     dlog.iptr6 = &temp2;
-    dlog.iptr7 = &tok_grid_dct_reg.Correction;
+    dlog.iptr7 = &tok_grid_dct_reg.Out;
     dlog.iptr8 = &tok_grid_dct_reg.Err;
 
     // inicializitam generator referenènega signala
@@ -1172,8 +1159,8 @@ void PER_int_setup(void)
     tok_grid_dct_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
     tok_grid_dct_reg.Kdct = 0.0; //0.02
     tok_grid_dct_reg.k = 0.2;
-    tok_grid_dct_reg.ErrSumMax = 0.5;
-    tok_grid_dct_reg.ErrSumMin = -0.5;
+    tok_grid_dct_reg.ErrSumMax = 0.6;
+    tok_grid_dct_reg.ErrSumMin = -0.6;
     tok_grid_dct_reg.OutMax = 0.5;
     tok_grid_dct_reg.OutMin = -0.5;
     DCT_REG_FIR_COEFF_CALC_MACRO(tok_grid_dct_reg);

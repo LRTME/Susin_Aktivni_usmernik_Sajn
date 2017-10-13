@@ -149,7 +149,6 @@ void DCT_REG_CALC (DCT_REG_float *v)
 
 
 
-
     // izraèun trenutnega indeksa bufferja
     v->i = (int)(v->SamplingSignal * v->BufferHistoryLength);
 
@@ -184,7 +183,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
         else if ( (v->i < v->i_prev) || (v->i - v->i_prev == (v->BufferHistoryLength - 1)) )
 		{
 			// indeks, ki kaže v preteklost (potrebujem za ponovno zakasnitev, ki je že kompenzirana z DCT filtrom)
-			v->index = v->i + 1 + v->k;
+			v->index = v->i + v->k;
 
 			// omejitve zaradi circular bufferja
 			if (v->index > (v->BufferHistoryLength - 1))
@@ -204,17 +203,16 @@ void DCT_REG_CALC (DCT_REG_float *v)
 		v->Err = v->Ref - v->Fdb;
 
 		// izraèunam novi akumuliran error
-//		v->ErrSum = v->Kdct * v->Err +						\
+		v->ErrSum = v->Kdct * v->Err +						\
 					v->CorrectionHistory[v->index];
-	/*
+
 		// omejim trenutni error, da ne gre v nasièenje
 		v->ErrSum = (v->ErrSum > v->ErrSumMax)? v->ErrSumMax: v->ErrSum;
 		v->ErrSum = (v->ErrSum < v->ErrSumMin)? v->ErrSumMin: v->ErrSum;
-	*/
 
 
 
-v->ErrSum = v->Err;
+
 		/* DCT filter - FIR filter */
 		firFP.input = v->ErrSum;
 		firFP.calc(&firFP);
@@ -224,8 +222,7 @@ v->ErrSum = v->Err;
 		v->CorrectionHistory[v->i] = v->Correction;
 
 		// izraèunam izhod
-//		v->Out = v->Correction;
-v->Out = v->CorrectionHistory[v->index];
+		v->Out = v->Correction;
 
 	    // shranim vrednost indeksa i, ki bo v naslednjem ciklu prejšnji i
 	    v->i_prev = v->i;
@@ -237,11 +234,11 @@ v->Out = v->CorrectionHistory[v->index];
 
 
 
-/*
+
     // omejim izhod
     v->Out = (v->Out > v->OutMax)? v->OutMax: v->Out;
     v->Out = (v->Out < v->OutMin)? v->OutMin: v->Out;
-*/
+
 
 
 

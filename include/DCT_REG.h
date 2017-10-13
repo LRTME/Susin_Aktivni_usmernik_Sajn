@@ -31,7 +31,7 @@
 #define		SELECTED_HARMONICS				{1,0,0}
 
 // number of samples for compensation of the phase delay
-#define		LAG_COMPENSATION				10
+#define		LAG_COMPENSATION				0
 
 // coefficients of FIR filter declaration
 extern float coeff[FIR_FILTER_NUMBER_OF_COEFF];
@@ -115,7 +115,7 @@ typedef struct DCT_REG_FLOAT_STRUCT
 				v.FIRCoeff[v.j] = v.FIRCoeff[v.j] + 														\
 								  2.0/FIR_FILTER_NUMBER_OF_COEFF *  										\
 								  cos( 2 * PI * v.Harmonics[v.i] * 											\
-								  ( (float)(v.j - LAG_COMPENSATION) ) / (FIR_FILTER_NUMBER_OF_COEFF - 1) );	\
+								  ( (float)(v.j - LAG_COMPENSATION) ) / (FIR_FILTER_NUMBER_OF_COEFF) );		\
 			}																								\
 		}																									\
 	/* FIR FILTER FROM FPU LIBRARY DOESN'T FLIP SIGNAL FROM LEFT TO RIGHT WHILE PERFORMING CONVOLUTION */	\
