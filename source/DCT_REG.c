@@ -111,7 +111,7 @@ void DCT_REG_CALC (DCT_REG_float *v)
         else if ( (v->i < v->i_prev) || (v->i - v->i_prev == (v->BufferHistoryLength - 1)) )
 		{
 			// indeks, ki kaže v preteklost (potrebujem za ponovno zakasnitev, ki je že kompenzirana z DCT filtrom)
-			v->index = v->i + v->k;
+			v->index = v->i + 1 + v->k;
 
 			// omejitve zaradi circular bufferja
 			if (v->index > (v->BufferHistoryLength - 1))
