@@ -48,7 +48,7 @@ PAGE 1 :
     D_M0        : origin = 0x000122,    length = 0x0002DE       /* on-chip RAM block M0 */
     D_M1        : origin = 0x000400,    length = 0x000400       /* on-chip RAM block M1 */
     
-    D_GS615     : origin = 0x012000,    length = 0x00A000       /* on-chip RAM block Global Shared 6-13 */
+    D_GS615     : origin = 0x012000,    length = 0x00A000       /* on-chip RAM block Global Shared 6-15 */
    
     CPU2TOCPU1RAM   : origin = 0x03F800,    length = 0x000400
     CPU1TOCPU2RAM   : origin = 0x03FC00,    length = 0x000400

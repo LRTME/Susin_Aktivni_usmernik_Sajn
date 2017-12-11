@@ -19,15 +19,17 @@
 // Create an Instance of FIRFILT_GEN module and place the object in "firfilt" section
 #pragma DATA_SECTION(firFP, "firfilt")
 FIR_FP  firFP = FIR_FP_DEFAULTS;
-// Define the Delay buffer for the 50th order filterfilter and place it in "firldb" section
+// Define the Delay buffer for the FIR filter and place it in "firldb" section
 #pragma DATA_SECTION(dbuffer, "firldb")
 // Align the delay buffer for max 1024 words (512 float variables)
 #pragma DATA_ALIGN (dbuffer,0x400)
+// Define the Delay buffer for the FIR filter with specifed length
 float dbuffer[FIR_FILTER_NUMBER_OF_COEFF];
-// Define Constant Co-efficient Array  and place the .constant section in ROM memory
+// Define coefficient array and place it in "coefffilter" section
 #pragma DATA_SECTION(coeff, "coefffilt");
 // Align the coefficent buffer for max 1024 words (512 float coeff)
 #pragma DATA_ALIGN (coeff,0x400)
+// Define the coeff buffer for the FIR filter with specifed length
 float coeff[FIR_FILTER_NUMBER_OF_COEFF];
 
 

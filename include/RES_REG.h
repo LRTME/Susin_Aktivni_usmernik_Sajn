@@ -24,7 +24,7 @@ typedef struct RES_REG_FLOAT_STRUCT
 {
     float Ref;            // Input: Reference input 
     float Fdb;            // Input: Feedback input 
-    float Kot;            // Input: Angle that controls resonant controller [0,1)
+    float Angle;          // Input: Angle that controls resonant controller [0,1)
     float Ff;             // Input: Feedforward input
     float Kres;           // Parameter: Resonant controller gain
     float Kff;            // Parameter: Feedforward gain
@@ -67,17 +67,17 @@ typedef struct RES_REG_FLOAT_STRUCT
 
 #define RES_REG_CALC(v)                       		\
 {                                                   \
-	if (v.Kot > 1.0)								\
+	if (v.Angle > 1.0)								\
     {                                               \
-        v.Kot = 1.0;                           		\
+        v.Angle = 1.0;                           	\
     }                                               \
-	if (v.Kot < 0.0)								\
+	if (v.Angle < 0.0)								\
     {                                               \
-        v.Kot = 0.0;                           		\
+        v.Angle = 0.0;                           	\
     }                                               \
     v.Err = v.Ref - v.Fdb;    			            \
-	v.Cos = cos(2 * PI * v.Kot);                    \
-	v.Sin = sin(2 * PI * v.Kot);                    \
+	v.Cos = cos(2 * PI * v.Angle);                  \
+	v.Sin = sin(2 * PI * v.Angle);                  \
 	v.Ucos = v.Ui1 * v.Cos;                    	    \
 	v.Usin = v.Ui2 * v.Sin;                    		\
 	v.Ures = v.Ucos + v.Usin;						\

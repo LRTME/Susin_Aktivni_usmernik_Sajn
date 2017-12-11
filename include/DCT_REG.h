@@ -41,15 +41,13 @@ typedef struct DCT_REG_FLOAT_STRUCT
     float SamplingSignal;          	// Input: Signal that increments index [0, 1); CAUTION: SAMPLING SIGNAL MUST INCREMENT ONLY (UNTIL OVERFLOW)!
     float Ref;                      // Input: Reference input
     float Fdb;                      // Input: Feedback input
-    int   BufferHistoryLength;    	// Parameter: Length of buffer - must be the same as FIR_FILTER_NUMBER_OF_COEFF, otherwise FIR filter won't work properly
     float Kdct;                   	// Parameter: Gain for Err
-	int	  Harmonics[LENGTH_OF_HARMONICS_ARRAY];	// Parameter: Harmonics that will pass through DCT filter
-	float FIRCoeff[FIR_FILTER_NUMBER_OF_COEFF];	// Parameter: FIR filter coefficients (so called DCT filter)
-    int   k;                        // Parameter: Number of samples for compensation of delay
     float ErrSumMax;        		// Parameter: Maximum error
     float ErrSumMin;        		// Parameter: Minimum error
     float OutMax;					// Parameter: Maximum output
     float OutMin;                   // Parameter: Minimum output
+    int   BufferHistoryLength;    	// Variable: Length of buffer - must be the same as FIR_FILTER_NUMBER_OF_COEFF, otherwise FIR filter won't work properly
+    int   k;                        // Variable: Number of samples for delay, which is already compansated with DCT filter (must be the same as LAG_COMPENSATION)
     float Err;                      // Variable: Error
     float ErrSum;           		// Variable: Error that will be accumulated
     float Correction;               // Variable: Correction that is summed with Ref
@@ -59,7 +57,9 @@ typedef struct DCT_REG_FLOAT_STRUCT
 	int   j;                        // Variable: Index j in FIR filter coefficient and in for loop when performing convolution
 	int   CircularBufferIndex;		// Variable: Index of circular buffer
     float Out;                      // Output: DCT_REG output
-    float CorrectionHistory[FIR_FILTER_NUMBER_OF_COEFF];	// History: Buffer of errors from previous period
+    float CorrectionHistory[FIR_FILTER_NUMBER_OF_COEFF]; // History: Circular buffer of errors from previous period
+	int	  Harmonics[LENGTH_OF_HARMONICS_ARRAY];			 // Array: Harmonics that will pass through DCT filter
+	float FIRCoeff[FIR_FILTER_NUMBER_OF_COEFF];			 // Array: FIR filter coefficients (so called DCT filter)
 } DCT_REG_float;
 
 
@@ -68,13 +68,13 @@ typedef struct DCT_REG_FLOAT_STRUCT
     0.0,     					\
     0.0,    					\
     0.0,    					\
-    0,  						\
-    0.0,    					\
-    0,	    					\
+    0.0,  						\
     0.0,    					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
+    0,    						\
+    0,    						\
     0.0,    					\
     0.0,   						\
     0.0,    					\

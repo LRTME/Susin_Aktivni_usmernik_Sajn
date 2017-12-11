@@ -433,7 +433,7 @@ void input_bridge_control(void)
         {
 			tok_grid_res_reg.Ref = tok_grid_reg.Ref;
 			tok_grid_res_reg.Fdb = tok_grid_reg.Fdb;
-			tok_grid_res_reg.Kot = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
 			tok_grid_res_reg.Ff = 0;
 
 			TIC_start_1();
@@ -1071,7 +1071,7 @@ void PER_int_setup(void)
     dlog.iptr7 = &tok_grid_reg.Out;
     dlog.iptr8 = &tok_grid_reg.Err;
 
-    // inicializitam generator referenènega signala
+    // inicializiram generator referenènega signala
     ref_gen.amp = 2;
     ref_gen.offset = U_DC_REF;
     ref_gen.type = Step;
@@ -1112,9 +1112,7 @@ void PER_int_setup(void)
 
     // inicializiram DCT regulator omreznega toka
     DCT_REG_INIT_MACRO(tok_grid_dct_reg);
-    tok_grid_dct_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
     tok_grid_dct_reg.Kdct = 0.0; // 0.02
-    tok_grid_dct_reg.k = LAG_COMPENSATION;
     tok_grid_dct_reg.ErrSumMax = 0.6;
     tok_grid_dct_reg.ErrSumMin = -0.6;
     tok_grid_dct_reg.OutMax = 0.5;
