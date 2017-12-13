@@ -110,10 +110,18 @@ labela:
     }
 
 
-    // pocakam, da napetost na enosmernem tokokrogu naraste
+    // preverim, èe je napetost narasla, v nasprotnem primeru predvidevam napako in izklopim rele
     while (nap_dc < nap_grid_rms * SQRT2 * 0.95)
     {
-        /* DO NOTHING */
+        // izklopim kontaktor, onemogoèim prekinitve
+        PCB_in_relay_off();
+        DINT;
+
+        // signalizacija
+        PCB_en_LED_off();
+        PCB_mode_LED_off();
+
+        state = Fault_during_init;
     }
 
     // kratkostièim zagonski upor
