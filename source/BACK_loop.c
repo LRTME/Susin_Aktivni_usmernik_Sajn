@@ -37,6 +37,8 @@ void work_fcn(void);
 void ramp_down_fcn(void);
 void fault_sensed_fcn(void);
 void fault_fcn(void);
+void fault_during_init_fcn(void);
+
 
 float   cutoff_freq_out = 1500;
 float   damping_out = 0.707;
@@ -97,6 +99,9 @@ void BACK_loop(void)
         case Fault:
             fault_fcn();
             break;
+        case Fault_during_init:
+        	fault_during_init_fcn();
+            break;
         }
 
 
@@ -124,6 +129,24 @@ void BACK_loop(void)
 
     }   // end of while(1)
 }       // end of BACK_loop
+
+void fault_during_init_fcn(void)
+{
+    // pobrišem napako, in grem v standby
+    if (PCB_reset_SW() == TRUE)
+    {
+        // resetiram MCU - preko WD-ja
+        EALLOW;
+        /* RESETIRANJE PROCESORJA S POMOÈJO V PROCESOR VGRAJENEGA PSA ÈUVAJA */
+        // najprej omogoèim psa èuvaja, ker do sedaj še ni bil in vedno, ko pišem po tem registru zapišem še 1,0,1 na bite z zap. št. 5,4,3
+        WdRegs.WDCR.all = 0x0028;
+        // potem onemogoèim psa èuvaja in namenoma ne napišem kombinacije 1,0,1 na bite z zap. št. 5,4,3 - to sproži reset procesorja
+        WdRegs.WDCR.all = 0x0040;
+        EDIS;
+    }
+    // signalizacija
+    PCB_en_LED_off();
+}
 
 void fault_fcn(void)
 {

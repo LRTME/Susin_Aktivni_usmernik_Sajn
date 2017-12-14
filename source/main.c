@@ -111,7 +111,7 @@ labela:
 
 
     // preverim, èe je napetost narasla, v nasprotnem primeru predvidevam napako in izklopim rele
-    while (nap_dc < nap_grid_rms * SQRT2 * 0.95)
+    if (nap_dc < nap_grid_rms * SQRT2 * 0.95)
     {
         // izklopim kontaktor, onemogoèim prekinitve
         PCB_in_relay_off();
@@ -122,6 +122,8 @@ labela:
         PCB_mode_LED_off();
 
         state = Fault_during_init;
+        // grem v neskoncno zanko, ki se izvaja v ozadju
+        BACK_loop();
     }
 
     // kratkostièim zagonski upor
