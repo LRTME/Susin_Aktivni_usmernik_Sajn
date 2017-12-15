@@ -26,6 +26,7 @@ typedef struct RES_REG_FLOAT_STRUCT
     float Fdb;            // Input: Feedback input 
     float Angle;          // Input: Angle that controls resonant controller [0,1)
     float Ff;             // Input: Feedforward input
+    int	  Harmonic;		  // Input: Harmonic
     float Kres;           // Parameter: Resonant controller gain
     float Kff;            // Parameter: Feedforward gain
 	float OutMax;         // Parameter: Maximum output 
@@ -48,7 +49,8 @@ typedef struct RES_REG_FLOAT_STRUCT
     0.0,    					\
     0.0,    					\
     0.0,    					\
-    0.0,    					\
+	0.0,    					\
+	0,      					\
     0.0,    					\
     0.0,    					\
     0.0,    					\
@@ -76,8 +78,8 @@ typedef struct RES_REG_FLOAT_STRUCT
         v.Angle = 0.0;                           	\
     }                                               \
     v.Err = v.Ref - v.Fdb;    			            \
-	v.Cos = cos(2 * PI * v.Angle);                  \
-	v.Sin = sin(2 * PI * v.Angle);                  \
+	v.Cos = cos(2 * PI * v.Harmonic * v.Angle);     \
+	v.Sin = sin(2 * PI * v.Harmonic * v.Angle);     \
 	v.Ucos = v.Ui1 * v.Cos;                    	    \
 	v.Usin = v.Ui2 * v.Sin;                    		\
 	v.Ures = v.Ucos + v.Usin;						\

@@ -67,6 +67,15 @@ float		nap_PI_reg_out_filtered = 0.0;
 // regulacija omreznega toka
 PID_float   	tok_grid_reg = PID_FLOAT_DEFAULTS;
 RES_REG_float 	tok_grid_res_reg = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg2 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg3 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg4 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg5 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg6 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg7 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg8 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg9 = RES_REG_FLOAT_DEFAULTS;
+RES_REG_float 	tok_grid_res_reg10 = RES_REG_FLOAT_DEFAULTS;
 DCT_REG_float	tok_grid_dct_reg = DCT_REG_FLOAT_DEFAULTS;
 REP_REG_float	tok_grid_rep_reg = REP_REG_FLOAT_DEFAULTS;
 DFT_float		tok_grid_dft = DFT_FLOAT_DEFAULTS;
@@ -76,7 +85,7 @@ float 			tok_grid_rms = 0.0;
 float 			THD_tok_grid = 0.0;
 volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
-float 			cas_izracuna_PID_reg = 0.0;
+float 			cas_izracuna_PI_reg = 0.0;
 float 			cas_izracuna_RES_reg = 0.0;
 float 			cas_izracuna_DCT_reg = 0.0;
 float 			cas_izracuna_REP_reg = 0.0;
@@ -423,25 +432,87 @@ void input_bridge_control(void)
         tok_grid_reg.Fdb = tok_grid;
         tok_grid_reg.Ff = nap_grid/nap_dc;
 
+		TIC_start_1();
         PID_FLOAT_CALC(tok_grid_reg);
+		TIC_stop_1();
 
-
-
+        cas_izracuna_PI_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
 
         /* RESONANÈNI REGULATOR */
         if (extra_i_grid_reg_type == RES)
         {
 			tok_grid_res_reg.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg2.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg3.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg4.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg5.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg6.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg7.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg8.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg9.Ref = tok_grid_reg.Ref;
+			tok_grid_res_reg10.Ref = tok_grid_reg.Ref;
+
 			tok_grid_res_reg.Fdb = tok_grid_reg.Fdb;
-			tok_grid_res_reg.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg2.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg3.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg4.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg5.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg6.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg7.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg8.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg9.Fdb = tok_grid_reg.Fdb;
+			tok_grid_res_reg10.Fdb = tok_grid_reg.Fdb;
+
 			tok_grid_res_reg.Ff = 0;
+			tok_grid_res_reg2.Ff = 0;
+			tok_grid_res_reg3.Ff = 0;
+			tok_grid_res_reg4.Ff = 0;
+			tok_grid_res_reg5.Ff = 0;
+			tok_grid_res_reg6.Ff = 0;
+			tok_grid_res_reg7.Ff = 0;
+			tok_grid_res_reg8.Ff = 0;
+			tok_grid_res_reg9.Ff = 0;
+			tok_grid_res_reg10.Ff = 0;
+
+			tok_grid_res_reg.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg2.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg3.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg4.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg5.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg6.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg7.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg8.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg9.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg10.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+
+		    tok_grid_res_reg.Harmonic = 1;
+		    tok_grid_res_reg2.Harmonic = 3;
+		    tok_grid_res_reg3.Harmonic = 5;
+		    tok_grid_res_reg4.Harmonic = 7;
+		    tok_grid_res_reg5.Harmonic = 9;
+		    tok_grid_res_reg6.Harmonic = 11;
+		    tok_grid_res_reg7.Harmonic = 13;
+		    tok_grid_res_reg8.Harmonic = 15;
+		    tok_grid_res_reg9.Harmonic = 17;
+		    tok_grid_res_reg10.Harmonic = 19;
+
 
 			TIC_start_1();
         	RES_REG_CALC(tok_grid_res_reg);
+        	RES_REG_CALC(tok_grid_res_reg2);
+        	RES_REG_CALC(tok_grid_res_reg3);
+        	RES_REG_CALC(tok_grid_res_reg4);
+        	RES_REG_CALC(tok_grid_res_reg5);
+        	RES_REG_CALC(tok_grid_res_reg6);
+        	RES_REG_CALC(tok_grid_res_reg7);
+        	RES_REG_CALC(tok_grid_res_reg8);
+        	RES_REG_CALC(tok_grid_res_reg9);
+        	RES_REG_CALC(tok_grid_res_reg10);
 	        TIC_stop_1();
+
+	        cas_izracuna_RES_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         }
 
-        cas_izracuna_RES_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of RESONANÈNI REGULATOR */
 
 
@@ -457,9 +528,10 @@ void input_bridge_control(void)
 	 	    TIC_start_1();
 	        DCT_REG_CALC(&tok_grid_dct_reg);
 	        TIC_stop_1();
+
+	        cas_izracuna_DCT_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         }
 
-        cas_izracuna_DCT_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of DCT REGULATOR */
 
 
@@ -475,9 +547,10 @@ void input_bridge_control(void)
 	 	    TIC_start_1();
         	REP_REG_CALC(&tok_grid_rep_reg);
 	        TIC_stop_1();
+
+			cas_izracuna_REP_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         }
 
-		cas_izracuna_REP_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
         /* End of REPETITIVNI REGULATOR */
 
 
@@ -1107,8 +1180,46 @@ void PER_int_setup(void)
     // inicializiram resonanèni regulator omreznega toka
     tok_grid_res_reg.Kres = 0.008;  	// 0.008;
     tok_grid_res_reg.Kff = 0;       // 0;
-    tok_grid_res_reg.OutMax = 0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg.OutMax = +0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
+
+    // inicializiram še resonanène regulatorje omreznega toka za višje harmonike
+    tok_grid_res_reg2.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg3.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg4.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg5.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg6.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg7.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg8.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg9.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg10.Kres = 0.008;  	// 0.008;
+    tok_grid_res_reg2.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg3.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg4.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg5.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg6.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg7.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg8.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg9.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg10.Kff = 0.0;  	    // 0.0;
+    tok_grid_res_reg2.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg3.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg4.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg5.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg6.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg7.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg8.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg9.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg10.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg2.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg3.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg4.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg5.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg6.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg7.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg8.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg9.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
+    tok_grid_res_reg10.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
 
     // inicializiram DCT regulator omreznega toka
     DCT_REG_INIT_MACRO(tok_grid_dct_reg);

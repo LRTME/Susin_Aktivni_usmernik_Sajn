@@ -12,7 +12,6 @@
 void main(void)
 {
     // PLL, in ura
-
     InitSysCtrl();
 
 labela:
