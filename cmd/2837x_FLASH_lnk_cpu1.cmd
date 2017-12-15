@@ -77,6 +77,9 @@ SECTIONS
 /* VARIABLES */
     .bss: >>        D_GS615  PAGE = 1
     .ebss: >>       D_GS615  PAGE = 1
+    firfilt > 		D_GS615  PAGE = 1			/* Section for struct for fast FIR filter realization with FPU unit */
+    firldb > 		D_GS615  PAGE = 1			/* Section for delay buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+   	coefffilt > 	D_GS615  PAGE = 1			/* Section for coeff buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
 
 /* CODE */
     .text: >        P_FE,                           PAGE = 0, ALIGN(4)
