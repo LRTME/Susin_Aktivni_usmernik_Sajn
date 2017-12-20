@@ -77,7 +77,7 @@ void ADC_init(void)
     EALLOW;
     AdcaRegs.ADCSOC0CTL.bit.CHSEL = 0;          //SOC0 will convert pin A0
     AdcaRegs.ADCSOC0CTL.bit.ACQPS = acqps_set;  //sample window
-    AdcaRegs.ADCSOC0CTL.bit.TRIGSEL = 5;        //trigger on ePWM1 SOCA
+    AdcaRegs.ADCSOC0CTL.bit.TRIGSEL = 6;        //trigger on ePWM1 SOCB
 
     AdcaRegs.ADCSOC1CTL.bit.CHSEL = 1;          //SOC1 will convert pin A1
     AdcaRegs.ADCSOC1CTL.bit.ACQPS = acqps_set;  //sample window

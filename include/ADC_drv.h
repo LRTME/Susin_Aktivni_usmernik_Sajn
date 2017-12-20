@@ -21,12 +21,12 @@
 
 // startani na SOCA
 #define     TEMPERATURA     (AdcdResultRegs.ADCRESULT0) // A5 -> D2
-#define     TOK_GRID        (AdcaResultRegs.ADCRESULT0) // B0 -> A0
 #define     TOK_BB1         (AdcaResultRegs.ADCRESULT1) // B1 -> A1
 #define     TOK_BB2         (AdcbResultRegs.ADCRESULT0) // A0 -> B0
 #define     TOK_OUT         (AdcaResultRegs.ADCRESULT2) // B2 -> A3
 
 // startani na SOCB
+#define     TOK_GRID        (AdcaResultRegs.ADCRESULT0) // B0 -> A0
 #define     NAP_CAP         (AdcaResultRegs.ADCRESULT3) // B3 -> A4
 #define     NAP_OUT         (AdcbResultRegs.ADCRESULT1) // A2 -> B3
 #define     NAP_DC          (AdcbResultRegs.ADCRESULT2) // A1 -> B1
