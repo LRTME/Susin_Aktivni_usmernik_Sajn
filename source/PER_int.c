@@ -86,6 +86,9 @@ float 			tok_grid_rms = 0.0;
 float 			THD_tok_grid = 0.0;
 volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
 
+int 			clear_REP_buffer_index = 0;
+int 			clear_DCT_buffer_index = 0;
+
 float 			cas_izracuna_PI_reg = 0.0;
 float 			cas_izracuna_RES_reg = 0.0;
 float 			cas_izracuna_DCT_reg = 0.0;
@@ -196,6 +199,8 @@ void get_electrical(void);
 void sync(void);
 void input_bridge_control(void);
 void output_bb_control(void);
+void clear_controllers(void);
+void clear_advanced_controllers(void);
 
 /**************************************************************
  * Prekinitev, ki v kateri se izvaja regulacija
@@ -568,6 +573,15 @@ void input_bridge_control(void)
 
 
 
+		/* NONE of extra_i_grid_reg_type */
+		if (extra_i_grid_reg_type == NONE)
+        {
+			clear_advanced_controllers();
+        }
+		/* End of NONE of extra_i_grid_reg_type */
+
+
+
         // posljem vse skupaj na mostic
         switch(extra_i_grid_reg_type)
         {
@@ -608,11 +622,8 @@ void input_bridge_control(void)
     // sicer pa nicim integralna stanja
     else
     {
-        nap_dc_reg.Ui = 0.0;
-        tok_grid_reg.Ui = 0.0;
-        tok_grid_res_reg.Ui1 = 0.0;
-        tok_grid_res_reg.Ui2 = 0.0;
         FB_update(0.0);
+        clear_controllers();
     }
 }
 
@@ -1128,6 +1139,111 @@ void check_limits(void)
             PCB_out_relay_off();
         }
     }
+}
+
+/**************************************************************
+* Function, which clears integral parts and outputs of controllers
+**************************************************************/
+void clear_controllers(void)
+{
+	// clear all integral parts of controllers
+    nap_dc_reg.Ui = 0.0;
+    tok_grid_reg.Ui = 0.0;
+
+	// clear all outputs of PI controllers
+    nap_dc_reg.Out = 0.0;
+    tok_grid_reg.Out = 0.0;
+
+	clear_advanced_controllers();
+}
+
+/**************************************************************
+* Function, which clears integral parts and outputs of
+* advaced current controllers
+**************************************************************/
+void clear_advanced_controllers(void)
+{
+	// clear all integral parts of resonant controllers
+    tok_grid_res_reg.Ui1 = 0.0;
+    tok_grid_res_reg.Ui2 = 0.0;
+    tok_grid_res_reg2.Ui1 = 0.0;
+    tok_grid_res_reg2.Ui2 = 0.0;
+    tok_grid_res_reg3.Ui1 = 0.0;
+    tok_grid_res_reg3.Ui2 = 0.0;
+    tok_grid_res_reg4.Ui1 = 0.0;
+    tok_grid_res_reg4.Ui2 = 0.0;
+    tok_grid_res_reg5.Ui1 = 0.0;
+    tok_grid_res_reg5.Ui2 = 0.0;
+    tok_grid_res_reg6.Ui1 = 0.0;
+    tok_grid_res_reg6.Ui2 = 0.0;
+    tok_grid_res_reg7.Ui1 = 0.0;
+    tok_grid_res_reg7.Ui2 = 0.0;
+    tok_grid_res_reg8.Ui1 = 0.0;
+    tok_grid_res_reg8.Ui2 = 0.0;
+    tok_grid_res_reg9.Ui1 = 0.0;
+    tok_grid_res_reg9.Ui2 = 0.0;
+    tok_grid_res_reg10.Ui1 = 0.0;
+    tok_grid_res_reg10.Ui2 = 0.0;
+
+	// clear all outputs of resonant controllers
+    tok_grid_res_reg.Out = 0.0;
+    tok_grid_res_reg2.Out = 0.0;
+    tok_grid_res_reg3.Out = 0.0;
+    tok_grid_res_reg4.Out = 0.0;
+    tok_grid_res_reg5.Out = 0.0;
+    tok_grid_res_reg6.Out = 0.0;
+    tok_grid_res_reg7.Out = 0.0;
+    tok_grid_res_reg8.Out = 0.0;
+    tok_grid_res_reg9.Out = 0.0;
+    tok_grid_res_reg10.Out = 0.0;
+
+
+
+
+	// clear all integral parts of repetitive controller
+	// CAUTION: THE FACT IS THAT SOME TIME MUST BE SPEND TO CLEAR THE WHOLE BUFFER (ONE IN EACH ITERATION),
+	//          WHICH IS TYPICAL LESS THAN 1 SEC!
+    tok_grid_rep_reg.ErrSumHistory[clear_REP_buffer_index] = 0.0;
+
+    tok_grid_rep_reg.ErrSum = 0.0;
+
+    tok_grid_rep_reg.i = 0;
+    tok_grid_rep_reg.i_prev = -1;
+
+	clear_REP_buffer_index = clear_REP_buffer_index + 1;
+	if(clear_REP_buffer_index >= tok_grid_rep_reg.BufferHistoryLength - 1)
+	{
+		clear_REP_buffer_index = 0;
+	}
+
+	// clear all outputs of repetitive controllers
+	tok_grid_rep_reg.Out = 0.0;
+
+
+
+
+	// clear all integral parts of DCT controller
+	// CAUTION: THE FACT IS THAT SOME TIME MUST BE SPEND TO CLEAR THE WHOLE BUFFER (ONE IN EACH ITERATION),
+	//          WHICH IS TYPICAL LESS THAN 1 SEC!
+	tok_grid_dct_reg.CorrectionHistory[clear_DCT_buffer_index] = 0.0;
+
+	// CAUTION: THE FACT IS THAT SOME TIME MUST BE SPEND TO CLEAR THE WHOLE BUFFER (ONE IN EACH ITERATION),
+	//          WHICH IS TYPICAL LESS THAN 1 SEC!
+	dbuffer[clear_DCT_buffer_index] = 0.0;
+
+	tok_grid_dct_reg.ErrSum = 0.0;
+
+	tok_grid_dct_reg.i = 0;
+	tok_grid_dct_reg.i_prev = -1;
+
+	clear_DCT_buffer_index = clear_DCT_buffer_index + 1;
+	if(clear_DCT_buffer_index >= tok_grid_dct_reg.BufferHistoryLength - 1)
+	{
+		clear_DCT_buffer_index = 0;
+	}
+
+	// clear all outputs of DCT controllers
+	tok_grid_dct_reg.Out = 0.0;
 }
 
 /**************************************************************
