@@ -464,17 +464,6 @@ void input_bridge_control(void)
 			tok_grid_res_reg9.Fdb = tok_grid_reg.Fdb;
 			tok_grid_res_reg10.Fdb = tok_grid_reg.Fdb;
 
-			tok_grid_res_reg.Ff = 0;
-			tok_grid_res_reg2.Ff = 0;
-			tok_grid_res_reg3.Ff = 0;
-			tok_grid_res_reg4.Ff = 0;
-			tok_grid_res_reg5.Ff = 0;
-			tok_grid_res_reg6.Ff = 0;
-			tok_grid_res_reg7.Ff = 0;
-			tok_grid_res_reg8.Ff = 0;
-			tok_grid_res_reg9.Ff = 0;
-			tok_grid_res_reg10.Ff = 0;
-
 			tok_grid_res_reg.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
 			tok_grid_res_reg2.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
 			tok_grid_res_reg3.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
@@ -496,7 +485,7 @@ void input_bridge_control(void)
 		    tok_grid_res_reg8.Harmonic = 15;
 		    tok_grid_res_reg9.Harmonic = 17;
 		    tok_grid_res_reg10.Harmonic = 19;
-*/
+
 		    tok_grid_res_reg.Harmonic = 1;
 		    tok_grid_res_reg2.Harmonic = 2;
 		    tok_grid_res_reg3.Harmonic = 3;
@@ -507,7 +496,7 @@ void input_bridge_control(void)
 		    tok_grid_res_reg8.Harmonic = 8;
 		    tok_grid_res_reg9.Harmonic = 9;
 		    tok_grid_res_reg10.Harmonic = 10;
-
+*/
 
 			TIC_start_1();
         	RES_REG_CALC(tok_grid_res_reg);
@@ -1207,6 +1196,16 @@ void PER_int_setup(void)
     tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
 
     // inicializiram še resonanène regulatorje omreznega toka za višje harmonike
+    tok_grid_res_reg.Harmonic = 1;
+    tok_grid_res_reg2.Harmonic = 2;
+    tok_grid_res_reg3.Harmonic = 3;
+    tok_grid_res_reg4.Harmonic = 4;
+    tok_grid_res_reg5.Harmonic = 5;
+    tok_grid_res_reg6.Harmonic = 6;
+    tok_grid_res_reg7.Harmonic = 7;
+    tok_grid_res_reg8.Harmonic = 8;
+    tok_grid_res_reg9.Harmonic = 9;
+    tok_grid_res_reg10.Harmonic = 10;
     tok_grid_res_reg2.Kres = tok_grid_res_reg.Kres;  	// 0.008;
     tok_grid_res_reg3.Kres = tok_grid_res_reg.Kres;  	// 0.008;
     tok_grid_res_reg4.Kres = tok_grid_res_reg.Kres;  	// 0.008;
