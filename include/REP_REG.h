@@ -14,6 +14,8 @@
 #ifndef INCLUDE_REP_REG_H_
 #define INCLUDE_REP_REG_H_
 
+// minimal length of buffer for saving history of accumulated error (minimalno 20)
+#define     MIN_LENGTH_REP_REG_BUFFER   20
 // maximal length of buffer for saving history of accumulated error
 #define     MAX_LENGTH_REP_REG_BUFFER   400
 
@@ -37,7 +39,8 @@ typedef struct REP_REG_FLOAT_STRUCT
     float ErrSum;           		// Variable: Error that will be accumulated
     float Correction;               // Variable: Correction that is summed with Ref
     int   i;                        // Variable: Index i in ErrSumHistory
-    int   i_prev;                   // History: i from previous period
+    int   i_prev;                   // Variable: i from previous period - history
+    int   i_delta;                  // Variable: difference between i and i_prev
     int   i_plus_one;               // Variable: i + 1 sample in history
     int   i_minus_one;              // Variable: i - 1 sample in history
     int   i_plus_two;               // Variable: i + 2 sample in history
@@ -66,7 +69,8 @@ typedef struct REP_REG_FLOAT_STRUCT
     0.0,    					\
     0.0,    					\
     0.0,      					\
-    0,      					\
+	0,      					\
+	0,      					\
     0,      					\
     0,      					\
     0,      					\
@@ -82,7 +86,9 @@ typedef struct REP_REG_FLOAT_STRUCT
     {                                                   	\
         v.ErrSumHistory[v.i] = 0.0;                   		\
     }                                                   	\
+	/* v.i and v.i_prev must not be equal at the start */   \
     v.i = 0;                                            	\
+    v.i_prev = -1;						 					\
 }
 
 
