@@ -1191,7 +1191,6 @@ void PER_int_setup(void)
 
     // inicializiram resonanèni regulator omreznega toka
     tok_grid_res_reg.Kres = 3.3e-4; // 0.008;
-    tok_grid_res_reg.Kff = 0;       // 0;
     tok_grid_res_reg.OutMax = +0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
 
@@ -1215,15 +1214,6 @@ void PER_int_setup(void)
     tok_grid_res_reg8.Kres = tok_grid_res_reg.Kres;  	// 0.008;
     tok_grid_res_reg9.Kres = tok_grid_res_reg.Kres;  	// 0.008;
     tok_grid_res_reg10.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg2.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg3.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg4.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg5.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg6.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg7.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg8.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg9.Kff = 0.0;  	    // 0.0;
-    tok_grid_res_reg10.Kff = 0.0;  	    // 0.0;
     tok_grid_res_reg2.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg3.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg4.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
