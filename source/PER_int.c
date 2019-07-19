@@ -94,11 +94,21 @@ float 			cas_izracuna_RES_reg = 0.0;
 float 			cas_izracuna_DCT_reg = 0.0;
 float 			cas_izracuna_REP_reg = 0.0;
 
-// spremenljivke za FIR filter iz FPU modula
+/* create (declare) delay buffer array for the use of FPU FIR filter struct library within tok_grid_dct_reg */
+// define the delay buffer for the FIR filter with specifed length - needed for DCT controller realization
+float dbuffer1[FIR_FILTER_NUMBER_OF_COEFF];
+// define the delay buffer for the FIR filter and place it in "firldb" section - needed for DCT controller realization
+#pragma DATA_SECTION(dbuffer1, "firldb")
+// align the delay buffer for max 1024 words (512 float variables) - needed for DCT controller realization
+#pragma DATA_ALIGN (dbuffer1,0x400)
 
-extern FIR_FP  firFP;
-extern float dbuffer[FIR_FILTER_NUMBER_OF_COEFF];
-extern float coeff[FIR_FILTER_NUMBER_OF_COEFF];
+/* create (declare) FIR filter coefficient buffer array for the use of FPU FIR filter struct library within tok_grid_dct_reg */
+// define the coeff buffer for the FIR filter with specifed length - needed for DCT controller realization
+float coeff1[FIR_FILTER_NUMBER_OF_COEFF];
+// define coefficient array and place it in "coefffilter" section - needed for DCT controller realization
+#pragma DATA_SECTION(coeff1, "coefffilt");
+// align the coefficent buffer for max 1024 words (512 float coeff) - needed for DCT controller realization
+#pragma DATA_ALIGN (coeff1,0x400)
 
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
@@ -1229,7 +1239,7 @@ void clear_advanced_controllers(void)
 
 	// CAUTION: THE FACT IS THAT SOME TIME MUST BE SPEND TO CLEAR THE WHOLE BUFFER (ONE IN EACH ITERATION),
 	//          WHICH IS TYPICAL LESS THAN 1 SEC!
-	dbuffer[clear_DCT_buffer_index] = 0.0;
+	dbuffer1[clear_DCT_buffer_index] = 0.0;
 
 	tok_grid_dct_reg.ErrSum = 0.0;
 
@@ -1349,20 +1359,30 @@ void PER_int_setup(void)
     tok_grid_res_reg9.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg10.OutMin = -0.5;	 // -0.5; // zaradi varnosti ne gre do 0.99
 
-    // inicializiram DCT regulator omreznega toka
-    DCT_REG_INIT_MACRO(tok_grid_dct_reg);
-    tok_grid_dct_reg.Kdct = 0.01; // 0.02
+    /* DCT controller parameters initialization */
+
+    // FPU library FIR filter initialization - necessary for the DCT filter realization
+    tok_grid_dct_reg.FIR_filter_float.cbindex = 0;
+    tok_grid_dct_reg.FIR_filter_float.order = FIR_FILTER_NUMBER_OF_COEFF - 1;
+    tok_grid_dct_reg.FIR_filter_float.input = 0.0;
+    tok_grid_dct_reg.FIR_filter_float.output = 0.0;
+    tok_grid_dct_reg.FIR_filter_float.init(&tok_grid_dct_reg);
+
+    // initialize FPU library FIR filter pointers, which are pointing to the external FIR filter coefficient buffer and delay buffer
+    // IMPORTANT: THOSE TWO POINTERS ARE USED TO CHANGE THE BUFFERS VALUES WITHIN STRUCTURE!
+    //            INITIALZE THE POINTERS IN THE NEXT TWO LINES BEFORE CALLING ANY INITIZALIZING MACRO OR FUNCTION!
+    tok_grid_dct_reg.FIR_filter_float.coeff_ptr = coeff1;
+    tok_grid_dct_reg.FIR_filter_float.dbuffer_ptr = dbuffer1;
+
+    // initialize current DCT controller
+    DCT_REG_INIT_MACRO(tok_grid_dct_reg); // initialize all arrays
+    tok_grid_dct_reg.Kdct = 0.01; // 0.01
+    tok_grid_dct_reg.k = 6; // 6
     tok_grid_dct_reg.ErrSumMax = 0.6;
     tok_grid_dct_reg.ErrSumMin = -0.6;
     tok_grid_dct_reg.OutMax = 0.5;
     tok_grid_dct_reg.OutMin = -0.5;
-    DCT_REG_FIR_COEFF_CALC_MACRO(tok_grid_dct_reg);
-
-	// FIR Generic Filter Initialisation
-	firFP.order = FIR_FILTER_NUMBER_OF_COEFF - 1;
-	firFP.dbuffer_ptr = dbuffer;
-	firFP.coeff_ptr = (float *)coeff;
-	firFP.init(&firFP);
+    DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dct_reg); // set coefficents of the DCT filter
 
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
