@@ -3,7 +3,7 @@
 * DESCRIPTION:  Repetitive controller (regulator) which is reducing periodic disturbance
 * AUTHOR:       Denis Sušin
 * START DATE:   6.4.2016
-* VERSION:      1.0
+* VERSION:      3.0
 *
 * CHANGES :
 * VERSION   DATE        WHO             DETAIL
@@ -11,6 +11,8 @@
 * 1.1		21.8.2017  Denis Sušin		Corrections of comments and names of variables
 * 2.0		15.5.2019  Denis Sušin		Circular buffer compacted into function and
 * 										circular buffer indexes handling upgraded
+* 3.0		19.7.2019  Denis Sušin		Corrections to "i_delta" calculations. Before the function had bugs.
+*
 ****************************************************************/
 
 #include "REP_REG.h"
@@ -91,27 +93,34 @@ void REP_REG_CALC (REP_REG_float *v)
     //      OPOMBA: To zadnjo funkcionalnost je mono izklopiti z odkomentiranjem vrstice "v->i_delta = 1;"!
     if ((v->i != v->i_prev))
     {
-    	// izraèun razlike med trenutnim indeksom "i" in prejšnjim indeksom "i_prev"
-    	// (èe je "SamplingSignal" prehiter, lahko velikost pomnilnika
-    	// umetno zmanjšamo za faktor "i_delta", saj zapisujemo in beremo le vsak "i_delta"-ti vzorec,
-    	// ki pa ne sme presegati polovico velikosti pomnilnika)
-    	v->i_delta = v->i - v->i_prev;
+		// izraèun razlike med trenutnim indeksom "i" in prejšnjim indeksom "i_prev"
+		// (èe je "SamplingSignal" prehiter, lahko velikost pomnilnika
+		// umetno zmanjšamo za faktor "i_delta", saj zapisujemo in beremo le vsak "i_delta"-ti vzorec,
+		// ki pa ne sme presegati polovico velikosti pomnilnika)
+		v->i_delta = v->i - v->i_prev;
 
-    	// manipuliranje z indeksi - zaradi circular bufferja; èe indeks narašèa - inkrementiranje
-    	if ( (v->i < v->i_prev) && (v->i_delta < -(v->BufferHistoryLength >> 1)) )
-    	{
-    		v->i_delta = v->BufferHistoryLength - v->i_delta;
-    	}
-    	// manipuliranje z indeksi - zaradi circular bufferja; èe indeks pada - dekrementiranje
-    	else if ( (v->i > v->i_prev) && (v->i_delta > (v->BufferHistoryLength >> 1)) )
-    	{
-    		v->i_delta = -(v->BufferHistoryLength - v->i_delta);
-    	}
+		// manipuliranje z indeksi - zaradi circular bufferja; èe indeks narašèa - inkrementiranje
+		if ( (v->i < v->i_prev) && (v->i_delta < -(v->BufferHistoryLength >> 1)) )
+		{
+			v->i_delta = v->BufferHistoryLength + v->i_delta;
+		}
+		// manipuliranje z indeksi - zaradi circular bufferja; èe indeks pada - dekrementiranje
+		else if ( (v->i > v->i_prev) && (v->i_delta > (v->BufferHistoryLength >> 1)) )
+		{
+			v->i_delta = -(v->BufferHistoryLength - v->i_delta);
+		}
 
 
-    	// èe funkcionalnost umetnega zmanjševanja velikosti pomnilnika ni zaelena ali ni potrebna (opis pod toèko 3.),
-    	// odkomentiraj naslednjo vrstico
-    	v->i_delta = 1;
+		// èe funkcionalnost umetnega zmanjševanja velikosti pomnilnika ni zaelena ali ni potrebna (opis pod toèko 3.),
+		// odkomentiraj naslednji blok programske kode
+		if(v->i_delta > 1)
+		{
+			v->i_delta = 1;
+		}
+		if(v->i_delta < -1)
+		{
+			v->i_delta = -1;
+		}
 
 
 

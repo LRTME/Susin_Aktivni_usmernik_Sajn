@@ -3,7 +3,7 @@
 * DESCRIPTION:  DCT controller (regulator) which is reducing periodic disturbance
 * AUTHOR:       Denis Sušin
 * START DATE:   29.8.2017
-* VERSION:      1.0
+* VERSION:      3.3
 *
 * CHANGES :
 * VERSION   DATE		WHO					DETAIL

@@ -3,12 +3,16 @@
 * DESCRIPTION:  Repetitive controller (regulator) which is reducing periodic disturbance
 * AUTHOR:       Denis Sušin
 * START DATE:   6.4.2016
-* VERSION:      1.0
+* VERSION:      3.0
 *
 * CHANGES :
 * VERSION   DATE        WHO             DETAIL
 * 1.0       6.4.2016   Denis Sušin      Initial version
 * 1.1		21.8.2017  Denis Sušin		Corrections of comments and names of variables
+* 2.0		15.5.2019  Denis Sušin		Circular buffer compacted into function and
+* 										circular buffer indexes handling upgraded
+* 3.0		19.7.2019  Denis Sušin		Corrections to "i_delta" calculations. Before the function had bugs.
+*
 ****************************************************************/
 
 #ifndef INCLUDE_REP_REG_H_

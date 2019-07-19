@@ -3,7 +3,7 @@
 * DESCRIPTION:  Resonant controller (regulator) which is reducing periodic error (only one harmonic component)
 * AUTHOR:       Denis Sušin
 * START DATE:   29.3.2018
-* VERSION:      1.0
+* VERSION:      3.1
 *
 * CHANGES :
 * VERSION   DATE        WHO             DETAIL
@@ -11,6 +11,7 @@
 * 2.0		29.3.2018	Denis Sušin     Phase lag compensation added, feedforward removed
 * 3.0		3.1.2019	Denis Sušin     Added limitation of integral parts
 * 3.1		15.5.2019   Denis Sušin     Added some comments
+*
 ****************************************************************/
 
 #ifndef __RES_REG_H__
