@@ -63,6 +63,10 @@ SECTIONS
     firfilt > 		D_GS615   	PAGE = 1			/* Section for struct for fast FIR filter realization with FPU unit */
     firldb > 		D_GS615   	PAGE = 1			/* Section for delay buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
    	coefffilt > 	D_GS615   	PAGE = 1			/* Section for coeff buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+    dual_DCT_firldb1 > 		D_GS615   	PAGE = 1			/* Section for delay buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+   	dual_DCT_coefffilt1 > 	D_GS615   	PAGE = 1			/* Section for coeff buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+    dual_DCT_firldb2 > 		D_GS615   	PAGE = 1			/* Section for delay buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
+   	dual_DCT_coefffilt2 > 	D_GS615   	PAGE = 1			/* Section for coeff buffer for fast FIR filter realization with FPU unit - must be aligned, which is done with #pragma */
 
 				 /* align(0x400) pomeni, da se spremenljivka "firfilt" naloži (zapiše) na lokacijo, ki je veèkratnik od 0x400,
 				 	"coefffilt" pa na lokacijo 0x800 (kar je naslednji veèkratnik od 0x400) znotraj bloka D_GSxx

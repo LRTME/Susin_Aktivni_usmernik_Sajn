@@ -3,7 +3,7 @@
 * DESCRIPTION:  DCT controller (regulator) which is reducing periodic disturbance
 * AUTHOR:       Denis Sušin
 * START DATE:   29.8.2017
-* VERSION:      3.3
+* VERSION:      3.4
 *
 * CHANGES :
 * VERSION   DATE		WHO					DETAIL
@@ -22,6 +22,8 @@
 *											compensated when calculating "index", because of calculation delay 
 *											(one sample exactly). However, this extra sample must not be implemented in 
 *											FIR (DCT) filter coefficients calculation.
+* 3.4		29.8.2019   Denis Sušin			Added pragma in front of two internal functions, cleared unnecessary init value
+*											and static attribute.
 *
 ****************************************************************/
 
@@ -240,9 +242,10 @@ void DCT_REG_CALC (DCT_REG_float *v)
  * OPOMBA: FIR filter iz FPU knjižnice izvede konvolucijo le delno, ker ne obrne signala, zato ima
  *         kompenzacija zakasnitve ravno nasproten predznak.
 ****************************************************************************************************/
+#pragma CODE_SECTION(FIR_FILTER_COEFF_CALC, "ramfuncs");
 void FIR_FILTER_COEFF_CALC (DCT_REG_float *v)
 {
-	int static harmonic_index = 0;
+	int harmonic_index;
 
 
 	*(v->FIR_filter_float.coeff_ptr + v->j) = 0.0;
@@ -251,7 +254,7 @@ void FIR_FILTER_COEFF_CALC (DCT_REG_float *v)
 	{
 		if(v->HarmonicsBuffer[harmonic_index] != 0)
 		{
-			*(v->FIR_filter_float.coeff_ptr + v->j) = *(v->FIR_filter_float.coeff_ptr + v->j) + 							\
+			*(v->FIR_filter_float.coeff_ptr + v->j) = *(v->FIR_filter_float.coeff_ptr + v->j) + 	\
 					      2.0/(FIR_FILTER_NUMBER_OF_COEFF) *  										\
 					      cos( 2 * PI * v->HarmonicsBuffer[harmonic_index] * 						\
 						  ( (float)(v->j - v->k) ) / (FIR_FILTER_NUMBER_OF_COEFF) );				\
@@ -265,7 +268,6 @@ void FIR_FILTER_COEFF_CALC (DCT_REG_float *v)
     if(v->j >= FIR_FILTER_NUMBER_OF_COEFF)
     {
     	v->j = 0;
-    	harmonic_index = 0;
     	v->CoeffCalcInProgressFlag = 0;
     }
 }
@@ -284,10 +286,11 @@ void FIR_FILTER_COEFF_CALC (DCT_REG_float *v)
  *         ki so absolutno manjša od 10-kratnika velikosti pomnilnika "BufferSize" (glej for zanko)!
  * OPOMBA: For zanka (namesto while) je implementirana zato, da omeji najveèje število iteracij zanke.
 ****************************************************************************************************/
+#pragma CODE_SECTION(circular_buffer_transformation2, "ramfuncs");
 int circular_buffer_transformation2(IndexLinearBuffer,BufferSize)
 {
 	int IndexCircularBuffer = IndexLinearBuffer;
-	static int i;
+	int i;
 
 	// omejim stevilo iteracij na 10
 	for(i = 0; i < 10; i++)

@@ -78,20 +78,23 @@ RES_REG_float 	tok_grid_res_reg9 = RES_REG_FLOAT_DEFAULTS;
 RES_REG_float 	tok_grid_res_reg10 = RES_REG_FLOAT_DEFAULTS;
 float			tok_grid_multiple_res_reg_out = 0.0;
 DCT_REG_float	tok_grid_dct_reg = DCT_REG_FLOAT_DEFAULTS;
+dual_DCT_REG_float	tok_grid_dual_dct_reg = dual_DCT_REG_FLOAT_DEFAULTS;
 REP_REG_float	tok_grid_rep_reg = REP_REG_FLOAT_DEFAULTS;
 DFT_float		tok_grid_dft = DFT_FLOAT_DEFAULTS;
 STAT_float		tok_grid_stat = STAT_FLOAT_DEFAULTS;
 float 			tok_grid_1_harm_rms = 0.0;
 float 			tok_grid_rms = 0.0;
 float 			THD_tok_grid = 0.0;
-volatile enum	{NONE, RES, DCT, REP} extra_i_grid_reg_type = NONE;
+volatile enum	{NONE, RES, REP, DCT, dual_DCT} extra_i_grid_reg_type = NONE;
 
 int 			clear_REP_buffer_index = 0;
 int 			clear_DCT_buffer_index = 0;
+int				clear_dual_DCT_buffer_index = 0;
 
 float 			cas_izracuna_PI_reg = 0.0;
 float 			cas_izracuna_RES_reg = 0.0;
 float 			cas_izracuna_DCT_reg = 0.0;
+float 			cas_izracuna_dual_DCT_reg = 0.0;
 float 			cas_izracuna_REP_reg = 0.0;
 
 /* create (declare) delay buffer array for the use of FPU FIR filter struct library within tok_grid_dct_reg */
@@ -109,6 +112,35 @@ float coeff1[FIR_FILTER_NUMBER_OF_COEFF];
 #pragma DATA_SECTION(coeff1, "coefffilt");
 // align the coefficent buffer for max 1024 words (512 float coeff) - needed for DCT controller realization
 #pragma DATA_ALIGN (coeff1,0x400)
+
+
+// define the delay buffer for the FIR filter with specifed length - needed for DCT controller realization
+float dual_DCT_dbuffer1[FIR_FILTER_NUMBER_OF_COEFF];
+// define the delay buffer for the FIR filter and place it in "firldb" section - needed for DCT controller realization
+#pragma DATA_SECTION(dual_DCT_dbuffer1, "dual_DCT_firldb1")
+// align the delay buffer for max 1024 words (512 float variables) - needed for DCT controller realization
+#pragma DATA_ALIGN (dual_DCT_dbuffer1,0x400)
+
+// define the coeff buffer for the FIR filter with specifed length - needed for DCT controller realization
+float dual_DCT_coeff1[FIR_FILTER_NUMBER_OF_COEFF];
+// define coefficient array and place it in "coefffilter" section - needed for DCT controller realization
+#pragma DATA_SECTION(dual_DCT_coeff1, "dual_DCT_coefffilt1");
+// align the coefficent buffer for max 1024 words (512 float coeff) - needed for DCT controller realization
+#pragma DATA_ALIGN (dual_DCT_coeff1,0x400)
+
+// define the delay buffer for the FIR filter with specifed length - needed for DCT controller realization
+float dual_DCT_dbuffer2[FIR_FILTER_NUMBER_OF_COEFF];
+// define the delay buffer for the FIR filter and place it in "firldb" section - needed for DCT controller realization
+#pragma DATA_SECTION(dual_DCT_dbuffer2, "dual_DCT_firldb2")
+// align the delay buffer for max 1024 words (512 float variables) - needed for DCT controller realization
+#pragma DATA_ALIGN (dual_DCT_dbuffer2,0x400)
+
+// define the coeff buffer for the FIR filter with specifed length - needed for DCT controller realization
+float dual_DCT_coeff2[FIR_FILTER_NUMBER_OF_COEFF];
+// define coefficient array and place it in "coefffilter" section - needed for DCT controller realization
+#pragma DATA_SECTION(dual_DCT_coeff2, "dual_DCT_coefffilt1");
+// align the coefficent buffer for max 1024 words (512 float coeff) - needed for DCT controller realization
+#pragma DATA_ALIGN (dual_DCT_coeff2,0x400)
 
 // regulacija izhodne napetosti
 PID_float   nap_out_reg = PID_FLOAT_DEFAULTS;
@@ -564,6 +596,25 @@ void input_bridge_control(void)
 
 
 
+        /* dual DCT REGULATOR */
+        if (extra_i_grid_reg_type == dual_DCT)
+        {
+			tok_grid_dual_dct_reg.Ref = tok_grid_reg.Ref;
+			tok_grid_dual_dct_reg.Fdb = tok_grid_reg.Fdb;
+			tok_grid_dual_dct_reg.SamplingSignal = kot_50Hz;
+
+	 	    TIC_start_1();
+	        dual_DCT_REG_CALC(&tok_grid_dual_dct_reg);
+	        TIC_stop_1();
+
+	        cas_izracuna_dual_DCT_reg = (float) TIC_time_1 * 1.0/CPU_FREQ;
+        }
+
+        /* End of dual DCT REGULATOR */
+
+
+
+
         /* REPETITIVNI REGULATOR */
 		if (extra_i_grid_reg_type == REP)
         {
@@ -600,6 +651,9 @@ void input_bridge_control(void)
             break;
         case DCT:
             FB_update(tok_grid_reg.Out + tok_grid_dct_reg.Out);
+        	break;
+        case dual_DCT:
+            FB_update(tok_grid_reg.Out + tok_grid_dual_dct_reg.Out);
         	break;
         case REP:
             FB_update(tok_grid_reg.Out + tok_grid_rep_reg.Out);
@@ -1254,6 +1308,30 @@ void clear_advanced_controllers(void)
 
 	// clear all outputs of DCT controllers
 	tok_grid_dct_reg.Out = 0.0;
+
+
+
+
+	// clear all integral parts of dual DCT controller
+	// CAUTION: THE FACT IS THAT SOME TIME MUST BE SPEND TO CLEAR THE WHOLE BUFFER (ONE IN EACH ITERATION),
+	//          WHICH IS TYPICAL LESS THAN 1 SEC!
+	dual_DCT_dbuffer1[clear_dual_DCT_buffer_index] = 0.0;
+	dual_DCT_dbuffer2[clear_dual_DCT_buffer_index] = 0.0;
+
+
+	tok_grid_dual_dct_reg.ErrSum = 0.0;
+
+	tok_grid_dual_dct_reg.i = 0;
+	tok_grid_dual_dct_reg.i_prev = -1;
+
+	clear_dual_DCT_buffer_index = clear_dual_DCT_buffer_index + 1;
+	if(clear_dual_DCT_buffer_index >= tok_grid_dual_dct_reg.BufferHistoryLength - 1)
+	{
+		clear_dual_DCT_buffer_index = 0;
+	}
+
+	// clear all outputs of DCT controllers
+	tok_grid_dual_dct_reg.Out = 0.0;
 }
 
 /**************************************************************
@@ -1273,14 +1351,14 @@ void PER_int_setup(void)
     dlog.trig = &kot_50Hz; // &ref_kot
     dlog.trig_value = 0.01;
 
-    dlog.iptr1 = &nap_grid;
-    dlog.iptr2 = &tok_grid;
-    dlog.iptr3 = &nap_dc_reg.Fdb;
-    dlog.iptr4 = &nap_out_reg.Fdb;
-    dlog.iptr5 = &tok_grid_reg.Out;
-    dlog.iptr6 = &tok_grid_reg.Ref;
-    dlog.iptr7 = &tok_grid_reg.Fdb;
-    dlog.iptr8 = &tok_grid_reg.Err;
+    dlog.iptr1 = &tok_grid_reg.Ref;
+    dlog.iptr2 = &tok_grid_reg.Fdb;
+    dlog.iptr3 = &tok_grid_reg.Err;
+    dlog.iptr4 = &tok_grid_reg.Out;
+//    dlog.iptr5 = &nap_grid;
+//    dlog.iptr6 = &tok_grid;
+//    dlog.iptr7 = &nap_dc_reg.Fdb;
+//    dlog.iptr8 = &nap_out_reg.Fdb;
 
     // inicializiram generator referenènega signala
     ref_gen.amp = 2;
@@ -1300,6 +1378,7 @@ void PER_int_setup(void)
     nap_dc_slew.In = U_DC_REF;
     nap_dc_slew.Slope_up = 10.0 * SAMPLE_TIME;  // 10 V/s
     nap_dc_slew.Slope_down = nap_dc_slew.Slope_up;
+
 
     // inicializiram regulator DC_link napetosti
     nap_dc_reg.Kp = 2.0; //4.0;
@@ -1384,6 +1463,38 @@ void PER_int_setup(void)
     tok_grid_dct_reg.OutMin = -0.5;
     DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dct_reg); // set coefficents of the DCT filter
 
+    /* dual DCT controller parameters initialization */
+    // FPU library FIR filter initialization - necessary for the DCT filter 1 realization
+    tok_grid_dual_dct_reg.FIR_filter_float1.cbindex = 0;
+    tok_grid_dual_dct_reg.FIR_filter_float1.order = FIR_FILTER_NUMBER_OF_COEFF2 - 1;
+    tok_grid_dual_dct_reg.FIR_filter_float1.input = 0.0;
+    tok_grid_dual_dct_reg.FIR_filter_float1.output = 0.0;
+    tok_grid_dual_dct_reg.FIR_filter_float1.init(&tok_grid_dual_dct_reg);
+
+    // FPU library FIR filter initialization - necessary for the DCT filter 2 realization
+    tok_grid_dual_dct_reg.FIR_filter_float2.cbindex = 0;
+    tok_grid_dual_dct_reg.FIR_filter_float2.order = FIR_FILTER_NUMBER_OF_COEFF2 - 1;
+    tok_grid_dual_dct_reg.FIR_filter_float2.input = 0.0;
+    tok_grid_dual_dct_reg.FIR_filter_float2.output = 0.0;
+    tok_grid_dual_dct_reg.FIR_filter_float2.init(&tok_grid_dual_dct_reg);
+
+    // initialize FPU library FIR filter pointers, which are pointing to the external FIR filter coefficient buffer and delay buffer
+    // IMPORTANT: THOSE TWO POINTERS ARE USED TO CHANGE THE BUFFERS VALUES WITHIN STRUCTURE!
+    //            INITIALZE THE POINTERS IN THE NEXT FOUR LINES BEFORE CALLING ANY INITIZALIZING MACRO OR FUNCTION!
+    tok_grid_dual_dct_reg.FIR_filter_float1.coeff_ptr = dual_DCT_coeff1;
+    tok_grid_dual_dct_reg.FIR_filter_float1.dbuffer_ptr = dual_DCT_dbuffer1;
+    tok_grid_dual_dct_reg.FIR_filter_float2.coeff_ptr = dual_DCT_coeff2;
+    tok_grid_dual_dct_reg.FIR_filter_float2.dbuffer_ptr = dual_DCT_dbuffer2;
+
+    // initialize d current DCT controller
+    dual_DCT_REG_INIT_MACRO(tok_grid_dual_dct_reg); // initialize all variables and coefficients
+    tok_grid_dual_dct_reg.Kdct = 0.01; // 0.01
+    tok_grid_dual_dct_reg.ErrSumMax = 10.0;
+    tok_grid_dual_dct_reg.ErrSumMin = -10.0;
+    tok_grid_dual_dct_reg.OutMax = 0.5;
+    tok_grid_dual_dct_reg.OutMin = -0.5;
+    dual_DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dual_dct_reg); // set coefficents of the DCT filter
+
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
@@ -1396,6 +1507,9 @@ void PER_int_setup(void)
     tok_grid_rep_reg.ErrSumMin = -0.6;
     tok_grid_rep_reg.OutMax = 0.5;
     tok_grid_rep_reg.OutMin = -0.5;
+
+	// clear integral parts and outputs of all controllers
+	clear_controllers();
 
     // inicializiram rampo izhodne napetosti
     nap_out_slew.In = 0;    // kasneje jo doloèa potenciometer
