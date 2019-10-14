@@ -1388,14 +1388,14 @@ void PER_int_setup(void)
     nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
 
     // inicializiram PI regulator omreznega toka
-    tok_grid_reg.Kp = 0.073;        // 0.073 - optimum iznosa in simetrièni optimum
-    tok_grid_reg.Ki = 3.3e-4; 		// 6.66/SAMP_FREQ - optimum iznosa; 244.0/SAMP_FREQ - simetrièni optimum
+    tok_grid_reg.Kp = 0.098;        // 0.073 - optimum iznosa in simetrièni optimum
+    tok_grid_reg.Ki = 13.1/SAMP_FREQ; 	// 6.66/SAMP_FREQ - optimum iznosa; 244.0/SAMP_FREQ - simetrièni optimum
     tok_grid_reg.Kff = 0.9;         // 0.9;
     tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
     tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
 
     // inicializiram resonanèni regulator omreznega toka
-    tok_grid_res_reg.Kres = 3.3e-4; // 0.008;
+    tok_grid_res_reg.Kres = 13.1/SAMP_FREQ; // 0.008;
     tok_grid_res_reg.OutMax = +0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
 
@@ -1455,8 +1455,8 @@ void PER_int_setup(void)
 
     // initialize current DCT controller
     DCT_REG_INIT_MACRO(tok_grid_dct_reg); // initialize all arrays
-    tok_grid_dct_reg.Kdct = 0.01; // 0.01
-    tok_grid_dct_reg.k = 6; // 6
+    tok_grid_dct_reg.Kdct = 0.065; // 0.01
+    tok_grid_dct_reg.k = 5; // 5
     tok_grid_dct_reg.ErrSumMax = 0.6;
     tok_grid_dct_reg.ErrSumMin = -0.6;
     tok_grid_dct_reg.OutMax = 0.5;
@@ -1488,7 +1488,7 @@ void PER_int_setup(void)
 
     // initialize d current DCT controller
     dual_DCT_REG_INIT_MACRO(tok_grid_dual_dct_reg); // initialize all variables and coefficients
-    tok_grid_dual_dct_reg.Kdct = 0.01; // 0.01
+    tok_grid_dual_dct_reg.Kdct = 0.065; // 0.01
     tok_grid_dual_dct_reg.ErrSumMax = 10.0;
     tok_grid_dual_dct_reg.ErrSumMin = -10.0;
     tok_grid_dual_dct_reg.OutMax = 0.5;
@@ -1498,8 +1498,8 @@ void PER_int_setup(void)
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_rep_reg.Krep = 0.01; // 0.02
-    tok_grid_rep_reg.k = 6; // 6
+    tok_grid_rep_reg.Krep = 0.13; // 0.02
+    tok_grid_rep_reg.k = 5; // 5
     tok_grid_rep_reg.w0 = 0.2; // 0.2
     tok_grid_rep_reg.w1 = 0.2; // 0.2
     tok_grid_rep_reg.w2 = 0.2; // 0.2
