@@ -1498,7 +1498,7 @@ void PER_int_setup(void)
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_rep_reg.Krep = 0.13; // 0.02
+    tok_grid_rep_reg.Krep = 0.065; // 0.02
     tok_grid_rep_reg.k = 5; // 5
     tok_grid_rep_reg.w0 = 0.2; // 0.2
     tok_grid_rep_reg.w1 = 0.2; // 0.2
