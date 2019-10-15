@@ -32,8 +32,6 @@
 #include    "ABF_float.h"
 #include    "DELAY_float.h"
 
-#include    "SD_card.h"
-
 #include	"PI_REG.h"
 #include	"RES_REG.h"
 #include	"DCT_REG.h"

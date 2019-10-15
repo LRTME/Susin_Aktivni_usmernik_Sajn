@@ -41,7 +41,7 @@
 #define     FIR_FILTER_NUMBER_OF_COEFF   	400
 
 // maximal length of harmonics array
-#define		LENGTH_OF_HARMONICS_ARRAY		10
+#define		LENGTH_OF_HARMONICS_ARRAY		20
 // harmonics selection at the begining that passes through DCT filter (i.e. "{1,5,7}" means that 1st, 5th and 7th harmonic passes through DCT filter, others are blocked)
 #define		SELECTED_HARMONICS				{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
 

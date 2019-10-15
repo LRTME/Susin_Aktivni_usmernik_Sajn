@@ -207,8 +207,6 @@ long    interrupt_cycles = 0;
 long 	num_of_s_passed = 0;
 long 	num_of_min_passed = 0;
 
-long    sd_card_cnt = 0;
-
 // temperatura procesorja
 float   cpu_temp = 0.0;
 
@@ -321,14 +319,6 @@ void interrupt PER_int(void)
     if (kot_1000Hz < 0.0)
     {
     	kot_1000Hz = kot_1000Hz + 1.0;
-    }
-
-    // vsakih 10ms poklicem SD_card timer handler
-    sd_card_cnt = sd_card_cnt + 1;
-    if (sd_card_cnt >= SAMP_FREQ/100)
-    {
-        SD_tick_timer();
-        sd_card_cnt = 0;
     }
 
     // generiram želeno vrednost
@@ -1345,16 +1335,16 @@ void PER_int_setup(void)
     dlog.auto_time = 1;
     dlog.holdoff_time = 1;
 
-    dlog.prescalar = 20; // 20 -> okno: 1s, èe je zajetih 1000 vzorcev
+    dlog.prescalar = 5; // 20 -> okno: 1s, èe je zajetih 1000 vzorcev
 
     dlog.slope = Positive;
     dlog.trig = &kot_50Hz; // &ref_kot
     dlog.trig_value = 0.01;
 
-    dlog.iptr1 = &tok_grid_reg.Ref;
-    dlog.iptr2 = &tok_grid_reg.Fdb;
-    dlog.iptr3 = &tok_grid_reg.Err;
-    dlog.iptr4 = &tok_grid_reg.Out;
+    dlog.iptr1 = &tok_grid_reg.Fdb;
+//    dlog.iptr2 = &tok_grid_reg.Fdb;
+//    dlog.iptr3 = &tok_grid_reg.Err;
+//    dlog.iptr4 = &tok_grid_reg.Out;
 //    dlog.iptr5 = &nap_grid;
 //    dlog.iptr6 = &tok_grid;
 //    dlog.iptr7 = &nap_dc_reg.Fdb;

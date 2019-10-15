@@ -27,12 +27,6 @@ labela:
     // basic vector table
     InitPieVectTable();
 
-    // inicializiram SD kartico
-    SD_init();
-
-    // inicializacija komunikacije
-    COMM_initialization();
-
     // inicializiram ADC
     ADC_init();
 
@@ -70,9 +64,6 @@ labela:
     fault_flags.cpu_overrun = FALSE;
     fault_flags.fault_registered = FALSE;
     fault_flags.HW_trip = FALSE;
-
-    // inicializiram uptime števec
-    UP_init();
 
     // inicializiram zašèitno prekinitev,
     // in sicer po tem ko resetiram latch

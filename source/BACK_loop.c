@@ -55,9 +55,6 @@ void BACK_loop(void)
     // lokalne spremenljivke
     while (1)
     {
-        // hendlanje komunikacije
-        COMM_runtime();
-
         // na podlagi mejne frekvence in dušenj izraèunam a,b koeficienta
         i_cap_abf.Beta = (cutoff_freq_out*2*PI/SAMP_FREQ) * (cutoff_freq_out*2*PI/SAMP_FREQ);
         i_cap_abf.Alpha = 2*damping_out*sqrt(i_cap_abf.Beta)- i_cap_abf.Beta/2;
@@ -69,13 +66,6 @@ void BACK_loop(void)
         // generiranje pulzov in branje tipk
         pulse_gen();
         scan_keys();
-
-        // enkrat na sekundo poveèam števec uptime
-        // in ga zapišem v datoteko
-        if (pulse_1000ms == TRUE)
-        {
-            UP_inc();
-        }
 
         /*****************/
         /* state machine */
