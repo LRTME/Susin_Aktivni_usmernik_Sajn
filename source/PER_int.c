@@ -1371,21 +1371,21 @@ void PER_int_setup(void)
 
 
     // inicializiram regulator DC_link napetosti
-    nap_dc_reg.Kp = 2.0; //4.0;
-    nap_dc_reg.Ki = 0.0001; //0.0002;
-    nap_dc_reg.Kff = 0.9;
-    nap_dc_reg.OutMax = +20; //+15; //+10.0; // +33.0
-    nap_dc_reg.OutMin = -20; //-15; //-10.0; // -33.0
+    nap_dc_reg.Kp = 2.0; //2.0;
+    nap_dc_reg.Ki = 0.0001; //0.0001;
+    nap_dc_reg.Kff = 0.9; // 0.9
+    nap_dc_reg.OutMax = +20; //+15; //+10.0; // +20.0
+    nap_dc_reg.OutMin = -20; //-15; //-10.0; // -20.0
 
     // inicializiram PI regulator omreznega toka
-    tok_grid_reg.Kp = 0.098;        // 0.073 - optimum iznosa in simetrièni optimum
-    tok_grid_reg.Ki = 13.1/SAMP_FREQ; 	// 6.66/SAMP_FREQ - optimum iznosa; 244.0/SAMP_FREQ - simetrièni optimum
+    tok_grid_reg.Kp = 0.098;        // 0.098 - optimum iznosa in simetrièni optimum
+    tok_grid_reg.Ki = 13.1/SAMP_FREQ; 	// 13.1/SAMP_FREQ - optimum iznosa; 244.0/SAMP_FREQ - simetrièni optimum
     tok_grid_reg.Kff = 0.9;         // 0.9;
     tok_grid_reg.OutMax = +0.99;    // zaradi bootstrap driverjev ne gre do 1.0
     tok_grid_reg.OutMin = -0.99;    // zaradi bootstrap driverjev ne gre do 1.0
 
     // inicializiram resonanèni regulator omreznega toka
-    tok_grid_res_reg.Kres = 13.1/SAMP_FREQ; // 0.008;
+    tok_grid_res_reg.Kres = 13.1/SAMP_FREQ; // 13.1/SAMP_FREQ;
     tok_grid_res_reg.OutMax = +0.5;	// +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg.OutMin = -0.5; // -0.5; // zaradi varnosti ne gre do 0.99
 
@@ -1400,15 +1400,15 @@ void PER_int_setup(void)
     tok_grid_res_reg8.Harmonic = 8;
     tok_grid_res_reg9.Harmonic = 9;
     tok_grid_res_reg10.Harmonic = 10;
-    tok_grid_res_reg2.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg3.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg4.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg5.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg6.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg7.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg8.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg9.Kres = tok_grid_res_reg.Kres;  	// 0.008;
-    tok_grid_res_reg10.Kres = tok_grid_res_reg.Kres;  	// 0.008;
+    tok_grid_res_reg2.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg3.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg4.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg5.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg6.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg7.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg8.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg9.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
+    tok_grid_res_reg10.Kres = tok_grid_res_reg.Kres;  	// 13.1/SAMP_FREQ
     tok_grid_res_reg2.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg3.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
     tok_grid_res_reg4.OutMax = +0.5;	 // +0.5; // zaradi varnosti ne gre do 0.99
@@ -1445,12 +1445,12 @@ void PER_int_setup(void)
 
     // initialize current DCT controller
     DCT_REG_INIT_MACRO(tok_grid_dct_reg); // initialize all arrays
-    tok_grid_dct_reg.Kdct = 0.065; // 0.01
+    tok_grid_dct_reg.Kdct = 0.065; // 0.065 (13.1/4*50))
     tok_grid_dct_reg.k = 5; // 5
     tok_grid_dct_reg.ErrSumMax = 0.6;
     tok_grid_dct_reg.ErrSumMin = -0.6;
-    tok_grid_dct_reg.OutMax = 0.5;
-    tok_grid_dct_reg.OutMin = -0.5;
+    tok_grid_dct_reg.OutMax = 0.5; // 0.5
+    tok_grid_dct_reg.OutMin = -0.5; // -0.5
     DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dct_reg); // set coefficents of the DCT filter
 
     /* dual DCT controller parameters initialization */
@@ -1476,27 +1476,27 @@ void PER_int_setup(void)
     tok_grid_dual_dct_reg.FIR_filter_float2.coeff_ptr = dual_DCT_coeff2;
     tok_grid_dual_dct_reg.FIR_filter_float2.dbuffer_ptr = dual_DCT_dbuffer2;
 
-    // initialize d current DCT controller
+    // initialize current dual DCT controller
     dual_DCT_REG_INIT_MACRO(tok_grid_dual_dct_reg); // initialize all variables and coefficients
-    tok_grid_dual_dct_reg.Kdct = 0.065; // 0.01
+    tok_grid_dual_dct_reg.Kdct = 0.065; // 0.065 (13.1/4*50))
     tok_grid_dual_dct_reg.ErrSumMax = 10.0;
     tok_grid_dual_dct_reg.ErrSumMin = -10.0;
-    tok_grid_dual_dct_reg.OutMax = 0.5;
-    tok_grid_dual_dct_reg.OutMin = -0.5;
+    tok_grid_dual_dct_reg.OutMax = 0.5; // 0.5
+    tok_grid_dual_dct_reg.OutMin = -0.5; // -0.5
     dual_DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dual_dct_reg); // set coefficents of the DCT filter
 
     // inicializiram repetitivni regulator omreznega toka
     REP_REG_INIT_MACRO(tok_grid_rep_reg);
     tok_grid_rep_reg.BufferHistoryLength = SAMPLE_POINTS; // 400
-    tok_grid_rep_reg.Krep = 0.065; // 0.02
+    tok_grid_rep_reg.Krep = 0.065; // 0.065 (1/2 * 13.1/2*50))
     tok_grid_rep_reg.k = 5; // 5
     tok_grid_rep_reg.w0 = 0.2; // 0.2
     tok_grid_rep_reg.w1 = 0.2; // 0.2
     tok_grid_rep_reg.w2 = 0.2; // 0.2
     tok_grid_rep_reg.ErrSumMax = 0.6;
     tok_grid_rep_reg.ErrSumMin = -0.6;
-    tok_grid_rep_reg.OutMax = 0.5;
-    tok_grid_rep_reg.OutMin = -0.5;
+    tok_grid_rep_reg.OutMax = 0.5; // 0.5
+    tok_grid_rep_reg.OutMin = -0.5; // -0.5
 
 	// clear integral parts and outputs of all controllers
 	clear_controllers();
@@ -1507,7 +1507,7 @@ void PER_int_setup(void)
     nap_out_slew.Slope_down = nap_out_slew.Slope_up;
 
     // inicializiram regulator izhodne napetosti
-    nap_out_reg.Kp = 10.0;
+    nap_out_reg.Kp = 10.0; // 10.0
     nap_out_reg.Ki = 0.1; // 0.1
     nap_out_reg.Kff = 0.8;
     nap_out_reg.OutMax = +0.0;   // kasneje to doloèa potenciometer
@@ -1519,9 +1519,9 @@ void PER_int_setup(void)
     tok_bb_slew.Slope_down = tok_bb_slew.Slope_up;
 
     // inicializiram tokovna regulatorja
-    tok_bb1_reg.Kp = 0.1;
-    tok_bb1_reg.Ki = 0.001;
-    tok_bb1_reg.Kff = 0.8;
+    tok_bb1_reg.Kp = 0.1; // 0.1
+    tok_bb1_reg.Ki = 0.001; // 0.001
+    tok_bb1_reg.Kff = 0.8; // 0.8
     tok_bb1_reg.OutMax = +0.99; // zaradi bootstrap driverjev ne gre do 1.0
     tok_bb1_reg.OutMin = -0.99; // zaradi bootstrap driverjev ne gre do 1.0
 
@@ -1532,8 +1532,8 @@ void PER_int_setup(void)
     tok_bb2_reg.OutMin = tok_bb1_reg.OutMin;
 
     // regulator frekvence
-    sync_reg.Kp = 1000;
-    sync_reg.Ki = 0.01;
+    sync_reg.Kp = 1000.0; // 1000.0
+    sync_reg.Ki = 0.01; // 0.01
     sync_reg.OutMax = +SWITCH_FREQ/10;
     sync_reg.OutMin = -SWITCH_FREQ/10;
 

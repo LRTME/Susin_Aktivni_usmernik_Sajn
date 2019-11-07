@@ -56,7 +56,7 @@
 // nastavljena napetost enosmernega tokokroga
 #define     U_DC_REF        40
 
-#define     CURRENT_GRID_LIM    20
+#define     CURRENT_GRID_LIM    25
 #define     CURRENT_BB_LIM      20
 #define     CURRENT_BB_LIM      20
 #define     NAP_GRID_RMS_MIN    10
