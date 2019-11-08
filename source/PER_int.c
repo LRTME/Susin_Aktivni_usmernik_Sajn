@@ -1374,8 +1374,8 @@ void PER_int_setup(void)
     nap_dc_reg.Kp = 2.0; //2.0;
     nap_dc_reg.Ki = 0.0001; //0.0001;
     nap_dc_reg.Kff = 0.9; // 0.9
-    nap_dc_reg.OutMax = +20; //+15; //+10.0; // +20.0
-    nap_dc_reg.OutMin = -20; //-15; //-10.0; // -20.0
+    nap_dc_reg.OutMax = +CURRENT_GRID_LIM*0.9; //+15; //+10.0; // +20.0
+    nap_dc_reg.OutMin = -CURRENT_GRID_LIM*0.9; //-15; //-10.0; // -20.0
 
     // inicializiram PI regulator omreznega toka
     tok_grid_reg.Kp = 0.098;        // 0.098 - optimum iznosa in simetrièni optimum
