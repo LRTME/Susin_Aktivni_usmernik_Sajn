@@ -170,7 +170,7 @@ void ADC_wait(void)
 {
     while (AdcaRegs.ADCINTFLG.bit.ADCINT1 == 0)
     {
-        /* DO NoTHING */
+        /* DO NOTHING */
     }
     AdcaRegs.ADCINTFLGCLR.bit.ADCINT1;
 }

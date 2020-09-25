@@ -501,16 +501,16 @@ void input_bridge_control(void)
 			tok_grid_res_reg9.Fdb = tok_grid_reg.Fdb;
 			tok_grid_res_reg10.Fdb = tok_grid_reg.Fdb;
 
-			tok_grid_res_reg.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg2.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg3.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg4.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg5.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg6.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg7.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg8.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg9.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
-			tok_grid_res_reg10.Angle = ref_kot; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg2.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg3.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg4.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg5.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg6.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg7.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg8.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg9.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
+			tok_grid_res_reg10.Angle = kot_50Hz; // integral fiksne frekvence f = 50 Hz --> ker gre od 0 do 1
 /*
 		    tok_grid_res_reg.Harmonic = 1;
 		    tok_grid_res_reg2.Harmonic = 3;
@@ -1454,6 +1454,7 @@ void PER_int_setup(void)
     DCT_REG_FIR_COEFF_INIT_MACRO(tok_grid_dct_reg); // set coefficents of the DCT filter
 
     /* dual DCT controller parameters initialization */
+
     // FPU library FIR filter initialization - necessary for the DCT filter 1 realization
     tok_grid_dual_dct_reg.FIR_filter_float1.cbindex = 0;
     tok_grid_dual_dct_reg.FIR_filter_float1.order = FIR_FILTER_NUMBER_OF_COEFF2 - 1;
